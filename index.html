@@ -25,7 +25,7 @@
   --page:#f4f4f1; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
   --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.08); --wash:#efeee9;
   --up:#d03b3b; --up-soft:#fbe6e4; --dn:#2a78d6; --dn-soft:#e3eefb;
-  --accent:#eb6834; --m5:#c47a00; --m20:#c47a00; --ma:#f5a524; --now:#13a8c9; --band:#4a4945; --warn-soft:#fdf1d6; --warn-ink:#7a5200;
+  --accent:#eb6834; --m5:#c47a00; --m20:#c47a00; --ma:#f5a524; --now:#f2f2f0; --now-ring:#1f2a44; --band:#1f2a44; --warn-soft:#fdf1d6; --warn-ink:#7a5200;
   --f:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   color-scheme:light;
 }
@@ -33,12 +33,12 @@
   --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
   --grid:#2c2c2a; --axis:#45443f; --ring:rgba(255,255,255,.08); --wash:#252523;
   --up:#e66767; --up-soft:#3d2120; --dn:#3987e5; --dn-soft:#1b2c43;
-  --accent:#d95926; --m5:#f5b440; --m20:#f5b440; --ma:#d99520; --now:#3cc3e0; --band:#5c5b56; --warn-soft:#3a2f14; --warn-ink:#fab219; color-scheme:dark}}
+  --accent:#d95926; --m5:#f5b440; --m20:#f5b440; --ma:#e0a12a; --now:#e6e5e1; --now-ring:#0d0d0d; --band:#2c3b5e; --warn-soft:#3a2f14; --warn-ink:#fab219; color-scheme:dark}}
 :root[data-theme="dark"]{
   --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
   --grid:#2c2c2a; --axis:#45443f; --ring:rgba(255,255,255,.08); --wash:#252523;
   --up:#e66767; --up-soft:#3d2120; --dn:#3987e5; --dn-soft:#1b2c43;
-  --accent:#d95926; --m5:#f5b440; --m20:#f5b440; --ma:#d99520; --now:#3cc3e0; --band:#5c5b56; --warn-soft:#3a2f14; --warn-ink:#fab219; color-scheme:dark}
+  --accent:#d95926; --m5:#f5b440; --m20:#f5b440; --ma:#e0a12a; --now:#e6e5e1; --now-ring:#0d0d0d; --band:#2c3b5e; --warn-soft:#3a2f14; --warn-ink:#fab219; color-scheme:dark}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--page);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.5;letter-spacing:-.005em;
@@ -134,14 +134,14 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .band .track::before{content:"";position:absolute;left:0;right:0;top:11.5px;height:1px;background:var(--grid)}
 .band .zone{position:absolute;top:4px;height:16px;border-radius:4px;background:var(--band)}
 .band .mazone{position:absolute;top:4px;height:16px;background:var(--ma)}
-.band .dot{position:absolute;top:8px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--now);box-shadow:0 0 0 2px var(--surface)}
+.band .dot{position:absolute;top:8px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--now);box-shadow:0 0 0 2px var(--now-ring)}
 .m5,.m20{background:var(--ma)}
 .band .sw{display:inline-block;width:4px;height:11px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 .prow.m5 .lb::before,.prow.m20 .lb::before{content:"";display:inline-block;width:3px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 .prow.m5 .lb::before,.prow.m20 .lb::before{background:var(--ma)}
 .prow.m5,.prow.m20{background:none}
-.band .nowsw{width:8px;height:8px;border-radius:50%;background:var(--now);vertical-align:0}
-.prow.now .lb::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--now);margin-right:6px;vertical-align:1px}
+.band .nowsw{width:8px;height:8px;border-radius:50%;background:var(--now);box-shadow:0 0 0 1.5px var(--now-ring);vertical-align:0}
+.prow.now .lb::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--now);box-shadow:0 0 0 1.5px var(--now-ring);margin-right:6px;vertical-align:1px}
 
 /* 기관·외인 수급 가로 막대 */
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--wash);padding:3px;border-radius:10px;margin-bottom:12px}
