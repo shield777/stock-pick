@@ -91,10 +91,11 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .tile b{display:block;font-size:15px;font-weight:650;letter-spacing:-.01em;white-space:nowrap}
 .tile em{display:block;font-style:normal;font-size:11px;color:var(--muted)}
 .tile b i,.tile em i{font-style:normal}
-.tiles.low{grid-template-columns:repeat(4,1fr);margin-top:14px;padding-top:12px}
+.hero .tiles{grid-template-columns:repeat(4,1fr)}
+.tiles.low{margin-top:14px;padding-top:12px}
 
 /* 보유 */
-.hold{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 10px}
+.hold{display:grid;grid-template-columns:1fr 1fr;gap:12px 10px}
 .hold .pl{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px;border-radius:12px;background:var(--wash)}
 .hold .pl span{font-size:12px;color:var(--ink2)}
 .hold .pl b{font-size:22px;font-weight:700;letter-spacing:-.03em}
@@ -288,16 +289,10 @@ function optLabel(k, i){
 
 /* ── 그리기 ── */
 function heroCard(r, k){
-  const pctEm = (p, d) => { const ds = fShortDate(d);
-    return isNum(p) || ds ? `<i class="${cls(p)}">${p === 0 ? "0.00%" : isNum(p) ? fPct(p) + "%" : ""}</i>${isNum(p) && ds ? " · " : ""}${ds}` : ""; };
   const tiles = [
     ["주간등락률", `<i class="${cls(r["주간등락률"])}">${fPct(r["주간등락률"])}${isNum(r["주간등락률"]) && r["주간등락률"] !== 0 ? "%" : ""}</i>`, ""],
     ["기준가", fInt(r["기준가"]), "관심 등록 기준"],
   ];
-  if (k === "recent") tiles.push(
-    ["5거래일 고가", fInt(r["5고가"]), pctEm(r["5고가_기준대비"], r["5고가일"])],
-    ["20거래일 고가", fInt(r["20고가"]), pctEm(r["20고가_기준대비"], r["20고가일"])]);
-  tiles.push(["최고가", fInt(r["최고가"]), pctEm(r["최고가대비"], r["최고가일"])]);
   const low = k === "recent" ? [
     ["거래량일", blank(r["거래량_날짜"]) ? "—" : fShortDate(r["거래량_날짜"])],
     ["거래량일 종가", fInt(r["거래량_종가"])],
@@ -323,7 +318,6 @@ function holdCard(r){
   return `<div class="card"><h2>보유</h2>
     <div class="hold tn">
       <div class="pl"><span>평가손익</span><div><b class="${cls(r["평가손익"])}">${fSignedInt(r["평가손익"])}</b><i class="${cls(r["매수가대비"])}">${fPct(r["매수가대비"])}%</i></div></div>
-      <div class="tile"><span>매수가</span><b>${fInt(r["매수가"])}</b></div>
       <div class="tile"><span>보유수량</span><b>${fInt(r["보유수량"])}</b></div>
       <div class="tile"><span>매수금액</span><b>${fInt(r["매수금액"])}</b></div>
     </div></div>`;
@@ -340,12 +334,12 @@ function refCard(r, k){
   const hiDate = fShortDate(r["최고가일"]);
   const items = [];
   if (k === "buy") items.push(["매수가", "내 매수", r["매수가"], r["매수가대비"], "현재가 수익률", "mine"]);
-  items.push(["기준가", "관심 등록 기준", r["기준가"]],
-    ["최고가", hiDate ? `${hiDate} · 등록 후 최고` : "등록 후 최고", r["최고가"], r["최고가대비"], "기준가 대비"]);
+  items.push(["기준가", "관심 등록 기준", r["기준가"]]);
   if (k === "recent") items.push(
-    ["20거래일 고가", fShortDate(r["20고가일"]), r["20고가"], r["20고가_기준대비"], "기준가 대비"],
-    ["5거래일 고가", fShortDate(r["5고가일"]), r["5고가"], r["5고가_기준대비"], "기준가 대비"]);
-  const title = k === "buy" ? "매수가 · 기준가 · 최고가" : "기준가 · 최고가 · 고가";
+    ["5거래일 고가", fShortDate(r["5고가일"]), r["5고가"], r["5고가_기준대비"], "기준가 대비"],
+    ["20거래일 고가", fShortDate(r["20고가일"]), r["20고가"], r["20고가_기준대비"], "기준가 대비"]);
+  items.push(["최고가", hiDate ? `${hiDate} · 등록 후 최고` : "등록 후 최고", r["최고가"], r["최고가대비"], "기준가 대비"]);
+  const title = k === "buy" ? "매수가 · 기준가 · 최고가" : "기준가 · 고가 · 최고가";
   const shown = items.filter(it => isNum(it[2]) && it[2] !== 0);   // 자료가 없는 줄(예: 등록 당일 종목의 고가)은 숨김
   if (!shown.length) return "";
   return `<div class="card"><h2>${title}</h2><div class="plist">${priceRows(shown)}</div></div>`;
@@ -474,7 +468,7 @@ function showRow(i, smooth = true){
     chips.scrollTo({ left: Math.max(0, left), behavior: smooth ? "smooth" : "auto" });
   }
   const r = rowObj(TAB, i);
-  $("view").innerHTML = heroCard(r, TAB) + (TAB === "buy" ? holdCard(r) : "") + lineCard(r)
+  $("view").innerHTML = heroCard(r, TAB) + (TAB === "buy" ? holdCard(r) : "") + refCard(r, TAB) + lineCard(r)
     + supplyCard(r) + allCard(TAB, i);
   fitBandLabels();
 }
