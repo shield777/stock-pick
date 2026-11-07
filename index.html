@@ -25,7 +25,7 @@
   --page:#f4f4f1; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
   --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.08); --wash:#efeee9;
   --up:#d03b3b; --up-soft:#fbe6e4; --dn:#2a78d6; --dn-soft:#e3eefb;
-  --accent:#eb6834; --m5:#f07a3c; --m20:#22b3d4; --band:#4a4945; --warn-soft:#fdf1d6; --warn-ink:#7a5200;
+  --accent:#eb6834; --m5:#c47a00; --m20:#c47a00; --ma:#f5a524; --now:#13a8c9; --band:#4a4945; --warn-soft:#fdf1d6; --warn-ink:#7a5200;
   --f:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   color-scheme:light;
 }
@@ -33,12 +33,12 @@
   --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
   --grid:#2c2c2a; --axis:#45443f; --ring:rgba(255,255,255,.08); --wash:#252523;
   --up:#e66767; --up-soft:#3d2120; --dn:#3987e5; --dn-soft:#1b2c43;
-  --accent:#d95926; --m5:#f08a52; --m20:#3cc3e0; --band:#5c5b56; --warn-soft:#3a2f14; --warn-ink:#fab219; color-scheme:dark}}
+  --accent:#d95926; --m5:#f5b440; --m20:#f5b440; --ma:#d99520; --now:#3cc3e0; --band:#5c5b56; --warn-soft:#3a2f14; --warn-ink:#fab219; color-scheme:dark}}
 :root[data-theme="dark"]{
   --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
   --grid:#2c2c2a; --axis:#45443f; --ring:rgba(255,255,255,.08); --wash:#252523;
   --up:#e66767; --up-soft:#3d2120; --dn:#3987e5; --dn-soft:#1b2c43;
-  --accent:#d95926; --m5:#f08a52; --m20:#3cc3e0; --band:#5c5b56; --warn-soft:#3a2f14; --warn-ink:#fab219; color-scheme:dark}
+  --accent:#d95926; --m5:#f5b440; --m20:#f5b440; --ma:#d99520; --now:#3cc3e0; --band:#5c5b56; --warn-soft:#3a2f14; --warn-ink:#fab219; color-scheme:dark}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--page);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.5;letter-spacing:-.005em;
@@ -132,33 +132,36 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .band .track{position:relative;height:24px;margin:2px 0 4px}
 .band .track::before{content:"";position:absolute;left:0;right:0;top:11.5px;height:1px;background:var(--grid)}
 .band .zone{position:absolute;top:4px;height:16px;border-radius:4px;background:var(--band)}
+.band .mazone{position:absolute;top:4px;height:16px;background:var(--ma)}
 .band .mk{position:absolute;top:0;width:4px;height:24px;margin-left:-2px;border-radius:2px;box-shadow:0 0 0 1.5px var(--surface)}
-.band .dot{position:absolute;top:8px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 2px var(--surface)}
+.band .dot{position:absolute;top:8px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--now);box-shadow:0 0 0 2px var(--surface)}
 .m5{background:var(--m5)} .m20{background:var(--m20)}
 .band .sw{display:inline-block;width:4px;height:11px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 .prow.m5 .lb::before,.prow.m20 .lb::before{content:"";display:inline-block;width:3px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 .prow.m5 .lb::before{background:var(--m5)} .prow.m20 .lb::before{background:var(--m20)}
 .prow.m5,.prow.m20{background:none}
+.band .nowsw{width:8px;height:8px;border-radius:50%;background:var(--now);vertical-align:0}
+.prow.now .lb::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--now);margin-right:6px;vertical-align:1px}
 
 /* 기관·외인 수급 가로 막대 */
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--wash);padding:3px;border-radius:10px;margin-bottom:12px}
 .seg button{border:0;background:transparent;padding:7px 4px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--ring)}
-.hbars{display:grid}
-.hgrp{font-size:12px;font-weight:700;color:var(--ink);padding:10px 0 4px;border-top:1px solid var(--grid)}
-.hgrp:first-child{border-top:0;padding-top:0}
-.hrow{display:grid;grid-template-columns:66px 1fr;gap:8px;align-items:center;min-height:30px;padding:2px 0}
-.hrow:has(em){min-height:38px}
-.hrow .lb{font-size:13px;color:var(--ink2);line-height:1.15}
-.hrow .lb em{display:block;font-style:normal;font-size:10.5px;color:var(--muted)}
-.hrow.sum .lb{color:var(--ink);font-weight:650}
-.hrow .tr{position:relative;height:22px}
-.hrow .tr::before{content:"";position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:var(--axis)}
-.hrow .bar{position:absolute;top:5px;height:12px}
-.hrow .bar.p{left:50%;background:var(--up);border-radius:0 4px 4px 0}
-.hrow .bar.n{right:50%;background:var(--dn);border-radius:4px 0 0 4px}
-.hrow.sum .bar{height:14px;top:4px}
-.hrow .hv{position:absolute;top:2px;font-size:13px;font-weight:700;white-space:nowrap;line-height:18px}
+.vgrid{display:grid}
+.vrow{display:grid;gap:4px;align-items:center;padding:8px 0;border-top:1px solid var(--grid)}
+.vrow.vhead{border-top:0;padding:0 0 4px;font-size:11.5px;font-weight:600;color:var(--ink2);text-align:center}
+.vrow .lb{font-size:13px;font-weight:650;color:var(--ink);line-height:1.2}
+.vrow .lb em{display:block;font-style:normal;font-size:10px;font-weight:500;color:var(--muted)}
+.vc{display:grid;justify-items:center;gap:2px;min-width:0;text-align:center}
+.vc .vt{position:relative;width:100%;height:40px}
+.vc .vt::before{content:"";position:absolute;left:8%;right:8%;top:50%;height:1px;background:var(--axis)}
+.vc .vb{position:absolute;left:50%;width:14px;margin-left:-7px}
+.vc .vb.p{bottom:50%;background:var(--up);border-radius:4px 4px 0 0}
+.vc .vb.n{top:50%;background:var(--dn);border-radius:0 0 4px 4px}
+.vc b{font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2}
+.vc em{font-style:normal;font-size:10px;color:var(--muted);white-space:nowrap}
+.vc .part{margin-left:0}
+.vrow.sum{background:var(--wash);border-radius:10px;border-top:0;margin-top:4px;padding:8px 6px;margin-left:-6px;margin-right:-6px}
 .part{display:inline-block;font-size:10px;font-weight:600;padding:0 5px;border-radius:999px;background:var(--warn-soft);color:var(--warn-ink);margin-left:4px;vertical-align:1px}
 
 /* 전체 값 표 */
@@ -371,6 +374,7 @@ function bandChart(cur, m5, m20, up, lo){
     const p = x(v), anchor = p < 18 ? "l" : p > 82 ? "r" : "c";
     return `<span class="bl ${anchor} ${cls2}" style="left:${p.toFixed(2)}%">${html}</span>`;
   };
+  const mazone = ok(m5) && ok(m20) ? `<i class="mazone" style="left:${x(Math.min(m5, m20)).toFixed(2)}%;width:${Math.abs(x(m5) - x(m20)).toFixed(2)}%"></i>` : "";   // 5일선~20일선 구간
   const zone = ok(up) && ok(lo) ? `<i class="zone" style="left:${x(lo).toFixed(2)}%;width:${(x(up) - x(lo)).toFixed(2)}%"></i>` : "";
   const mk = (v, c) => ok(v) ? `<i class="mk ${c}" style="left:${x(v).toFixed(2)}%"></i>` : "";
   const ends = [];
@@ -378,8 +382,8 @@ function bandChart(cur, m5, m20, up, lo){
   if (ok(up)) ends.push(lbl(up, `상단 <b class="tn">${fInt(up)}</b>`));
   const narrow = ok(up) && ok(lo) && x(up) - x(lo) < 40;   // 띠가 좁으면 상단 글자를 한 줄 아래로
   return `<div class="band" role="img" aria-label="볼린저 밴드 안에서 현재가와 이동평균선 위치">
-    <div class="lane">${lbl(cur, `현재가 <b class="tn">${fInt(cur)}</b>`, "now")}</div>
-    <div class="track">${zone}${mk(m20, "m20")}${mk(m5, "m5")}<i class="dot" style="left:${x(cur).toFixed(2)}%"></i></div>
+    <div class="lane">${lbl(cur, `<i class="sw nowsw"></i>현재가 <b class="tn">${fInt(cur)}</b>`, "now")}</div>
+    <div class="track">${zone}${mazone}${mk(m20, "m20")}${mk(m5, "m5")}<i class="dot" style="left:${x(cur).toFixed(2)}%"></i></div>
     <div class="lane">${ok(m5) ? lbl(m5, `<i class="sw m5"></i>5일선 <b class="tn">${fInt(m5)}</b>`) : ""}</div>
     <div class="lane">${ok(m20) ? lbl(m20, `<i class="sw m20"></i>20일선 <b class="tn">${fInt(m20)}</b>`) : ""}</div>
     ${narrow ? `<div class="lane">${ends[0] || ""}</div><div class="lane">${ends[1] || ""}</div>` : `<div class="lane">${ends.join("")}</div>`}
@@ -388,36 +392,38 @@ function bandChart(cur, m5, m20, up, lo){
 const full = s => { if (blank(s)) return true; const m = String(s).match(/^(\d+)\/(\d+)$/); return !m || m[1] === m[2]; };
 let SUP_MODE = store.get("sp_sup") === "avg" ? "avg" : "flow";
 function supplyCard(r){
-  const per = [["5","5거래일"],["20거래일","20거래일"],["60거래일","60거래일"],["120거래일","120거래일"]];
+  const per = [["5","5일"],["20거래일","20일"],["60거래일","60일"],["120거래일","120일"]];
   const flowCol = (inv, key) => inv === "합계" ? `${key}순매수` : `${inv}_순매수(${key})`;
-  let groups;
-  const NAME = { "기관": "기관", "외인": "외국인", "합계": "합계 (기관+외국인)" };
-  if (SUP_MODE === "flow"){
-    groups = ["기관","외인","합계"].map(inv => ({ title: NAME[inv], rows: per.map(([key, lb]) => {
+  const NAME = { "기관": "기관", "외인": "외국인", "합계": "합계" };
+  const cols = SUP_MODE === "flow" ? per : per.slice(1);
+  const invs = SUP_MODE === "flow" ? ["기관","외인","합계"] : ["기관","외인"];
+  const rows = invs.map(inv => ({ inv, cells: cols.map(([key]) => {
+    if (SUP_MODE === "flow"){
       const c = flowCol(inv, key), cov = r[c + "_자료확보"];
-      return { lb, v: r[c], part: full(cov) ? "" : cov };
-    }) }));
-  } else {
-    groups = ["기관","외인"].map(inv => ({ title: NAME[inv], rows: per.slice(1).map(([key, lb]) => {
-      const n = key.replace("거래일", "");
-      return { lb, v: r[`${n}거래일/${inv}(평단%)`], sub: "평단 " + fInt(r[`${n}거래일/${inv}(평단)`]) };
-    }) }));
-  }
-  const nums = groups.flatMap(g => g.rows.map(x => x.v)).filter(isNum);
+      return { v: r[c], part: full(cov) ? "" : cov };
+    }
+    const n = key.replace("거래일", "");
+    return { v: r[`${n}거래일/${inv}(평단%)`], sub: "평단 " + fInt(r[`${n}거래일/${inv}(평단)`]) };
+  }) }));
+  const nums = rows.flatMap(x => x.cells.map(c => c.v)).filter(isNum);
+  if (!nums.length) return "";
   const max = Math.max(0, ...nums.map(Math.abs)) || 1;
-  const body = groups.map(g => `<div class="hgrp">${g.title}</div>` + g.rows.map(x => {
-    const v = x.v, w = isNum(v) ? Math.abs(v) / max * 34 : 0;          // 막대 최대 34% → 값 글자 자리 확보
-    const bar = isNum(v) && v !== 0 ? `<i class="bar ${v > 0 ? "p" : "n"}" style="width:${w.toFixed(2)}%"></i>` : "";
-    const tpos = !isNum(v) || v === 0 ? `left:50%;margin-left:6px` : v > 0 ? `left:${(50 + w).toFixed(2)}%;margin-left:6px` : `right:${(50 + w).toFixed(2)}%;margin-right:6px`;
-    return `<div class="hrow ${x.sum ? "sum" : ""}"><div class="lb">${x.lb}${x.sub ? `<em class="tn">${x.sub}</em>` : ""}</div>
-      <div class="tr">${bar}<span class="hv tn ${cls(v)}" style="${tpos}">${fPct(v)}${x.part ? `<span class="part">${esc(x.part)}</span>` : ""}</span></div></div>`;
-  }).join("")).join("");
+  const cell = c => {
+    const v = c.v, h = isNum(v) ? Math.abs(v) / max * 50 : 0;
+    const bar = isNum(v) && v !== 0 ? `<i class="vb ${v > 0 ? "p" : "n"}" style="height:${h.toFixed(2)}%"></i>` : "";
+    return `<div class="vc"><div class="vt">${bar}</div><b class="tn ${cls(v)}">${fPct(v)}</b>${
+      c.part ? `<span class="part">${esc(c.part)}</span>` : ""}${c.sub ? `<em class="tn">${c.sub}</em>` : ""}</div>`;
+  };
+  const tpl = `grid-template-columns:50px repeat(${cols.length},1fr)`;
+  const head = `<div class="vrow vhead" style="${tpl}"><div></div>${cols.map(([, lb]) => `<div>${lb}</div>`).join("")}</div>`;
+  const body = rows.map(x => `<div class="vrow ${x.inv === "합계" ? "sum" : ""}" style="${tpl}"><div class="lb">${NAME[x.inv]}${
+    x.inv === "합계" ? `<em>기관+외인</em>` : ""}</div>${x.cells.map(cell).join("")}</div>`).join("");
   const seg = (m, t) => `<button type="button" data-sup="${m}" aria-pressed="${SUP_MODE === m}">${t}</button>`;
-  const cap = SUP_MODE === "flow" ? "상장주식수 대비 순매수 %. 노란 표시는 자료가 일부만 확보된 기간(확보일/전체일)입니다."
-    : "현재가가 기관·외인 매수평단보다 몇 % 위(+)·아래(−)인지입니다. 5거래일 평단은 엑셀에 없습니다.";
+  const cap = SUP_MODE === "flow" ? "상장주식수 대비 순매수 %(거래일 기준). 노란 표시는 자료가 일부만 확보된 기간(확보일/전체일)입니다."
+    : "현재가가 기관·외국인 매수평단보다 몇 % 위(+)·아래(−)인지입니다(거래일 기준). 5일 평단은 엑셀에 없습니다.";
   return `<div class="card"><h2>기관 · 외국인 수급</h2>
     <div class="seg">${seg("flow", "순매수")}${seg("avg", "평단 대비 현재가")}</div>
-    <div class="hbars">${body}</div><div class="note">${cap}</div></div>`;
+    <div class="vgrid">${head}${body}</div><div class="note">${cap}</div></div>`;
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-sup]"); if (!b) return;
