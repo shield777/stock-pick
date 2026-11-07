@@ -90,10 +90,11 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .tile span{display:block;font-size:11px;color:var(--muted);white-space:nowrap}
 .tile b{display:block;font-size:15px;font-weight:650;letter-spacing:-.01em;white-space:nowrap}
 .tile em{display:block;font-style:normal;font-size:11px;color:var(--muted)}
-.tile b i{font-style:normal}
+.tile b i,.tile em i{font-style:normal}
+.tiles.low{grid-template-columns:repeat(4,1fr);margin-top:14px;padding-top:12px}
 
 /* 보유 */
-.hold{display:grid;grid-template-columns:1fr 1fr;gap:12px 10px}
+.hold{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 10px}
 .hold .pl{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px;border-radius:12px;background:var(--wash)}
 .hold .pl span{font-size:12px;color:var(--ink2)}
 .hold .pl b{font-size:22px;font-weight:700;letter-spacing:-.03em}
@@ -273,8 +274,7 @@ function fmt(name, v){
   }
 }
 const colored = (name, v) => `<span class="tn ${["pct","sint"].includes(colType(name)) ? cls(v) : ""}">${esc(fmt(name, v))}</span>`;
-function fCap(v){ if (!isNum(v)) return "—"; const eok = v / 1e8;
-  return eok >= 10000 ? (eok/10000).toFixed(eok >= 100000 ? 0 : 1) + "조" : Math.round(eok).toLocaleString("ko-KR") + "억"; }
+function fCap(v){ if (!isNum(v)) return "—"; return Math.round(v / 1e8).toLocaleString("ko-KR") + "억"; }   // 시가총액은 억 단위
 
 /* ── 상태 ── */
 let DATA = null, TAB = "buy";
@@ -288,33 +288,42 @@ function optLabel(k, i){
 
 /* ── 그리기 ── */
 function heroCard(r, k){
+  const pctEm = (p, d) => { const ds = fShortDate(d);
+    return isNum(p) || ds ? `<i class="${cls(p)}">${p === 0 ? "0.00%" : isNum(p) ? fPct(p) + "%" : ""}</i>${isNum(p) && ds ? " · " : ""}${ds}` : ""; };
   const tiles = [
-    ["시가총액", fCap(r["시가총액"]), ""],
-    ["회전율", blank(r["회전율"]) ? "—" : esc(r["회전율"]), ""],
+    ["주간등락률", `<i class="${cls(r["주간등락률"])}">${fPct(r["주간등락률"])}${isNum(r["주간등락률"]) && r["주간등락률"] !== 0 ? "%" : ""}</i>`, ""],
     ["기준가", fInt(r["기준가"]), "관심 등록 기준"],
   ];
-  if (k === "recent"){
-    tiles.push(["거래량일", fDate(r["거래량_날짜"]), ""],
-      ["거래량일 종가", fInt(r["거래량_종가"]), ""],
-      ["거래량일 등락률", `<i class="${cls(r["거래량_등락률"])}">${fPct(r["거래량_등락률"])}</i>`, ""]);
-  }
+  if (k === "recent") tiles.push(
+    ["5거래일 고가", fInt(r["5고가"]), pctEm(r["5고가_기준대비"], r["5고가일"])],
+    ["20거래일 고가", fInt(r["20고가"]), pctEm(r["20고가_기준대비"], r["20고가일"])]);
+  tiles.push(["최고가", fInt(r["최고가"]), pctEm(r["최고가대비"], r["최고가일"])]);
+  const low = k === "recent" ? [
+    ["거래량일", blank(r["거래량_날짜"]) ? "—" : fShortDate(r["거래량_날짜"])],
+    ["거래량일 종가", fInt(r["거래량_종가"])],
+    ["등락률", `<i class="${cls(r["거래량_등락률"])}">${fPct(r["거래량_등락률"])}</i>`],
+    ["회전율", blank(r["회전율"]) ? "—" : esc(r["회전율"])],
+  ] : [["회전율", blank(r["회전율"]) ? "—" : esc(r["회전율"])]];
+  const tile = ([a, b, c]) => `<div class="tile"><span>${a}</span><b>${b}</b>${c ? `<em>${c}</em>` : ""}</div>`;
   const days = ["D-3","D-2","D-1","D"].map(d => `<div><span>${d}</span><b class="${cls(r[d])}">${fPct(r[d])}</b></div>`).join("");
   return `<div class="card hero">
     <div class="name">${esc(r["종목명"])}</div>
     <div class="reg tn">등록일자 ${fDate(r["등록일자"])}</div>
     <div class="hero-row">
       <div class="price tn">${fInt(r["현재가"])}<small>원</small></div>
-      <div class="wk"><span>주간등락률</span><b class="tn ${cls(r["주간등락률"])}">${fPct(r["주간등락률"])}%</b></div>
+      <div class="wk"><span>시가총액</span><b class="tn">${fCap(r["시가총액"])}</b></div>
     </div>
-    <div class="tiles tn">${tiles.map(([a,b,c]) => `<div class="tile"><span>${a}</span><b>${b}</b>${c ? `<em>${c}</em>` : ""}</div>`).join("")}</div>
+    <div class="tiles tn">${tiles.map(tile).join("")}</div>
     <div class="days-cap">최근 4거래일 등락률(%) · D = ${fDate(DATA.asof.replaceAll("-",""))}</div>
     <div class="days tn">${days}</div>
+    <div class="tiles low tn">${low.map(tile).join("")}</div>
   </div>`;
 }
 function holdCard(r){
   return `<div class="card"><h2>보유</h2>
     <div class="hold tn">
       <div class="pl"><span>평가손익</span><div><b class="${cls(r["평가손익"])}">${fSignedInt(r["평가손익"])}</b><i class="${cls(r["매수가대비"])}">${fPct(r["매수가대비"])}%</i></div></div>
+      <div class="tile"><span>매수가</span><b>${fInt(r["매수가"])}</b></div>
       <div class="tile"><span>보유수량</span><b>${fInt(r["보유수량"])}</b></div>
       <div class="tile"><span>매수금액</span><b>${fInt(r["매수금액"])}</b></div>
     </div></div>`;
@@ -465,7 +474,7 @@ function showRow(i, smooth = true){
     chips.scrollTo({ left: Math.max(0, left), behavior: smooth ? "smooth" : "auto" });
   }
   const r = rowObj(TAB, i);
-  $("view").innerHTML = heroCard(r, TAB) + (TAB === "buy" ? holdCard(r) : "") + refCard(r, TAB) + lineCard(r)
+  $("view").innerHTML = heroCard(r, TAB) + (TAB === "buy" ? holdCard(r) : "") + lineCard(r)
     + supplyCard(r) + allCard(TAB, i);
   fitBandLabels();
 }
