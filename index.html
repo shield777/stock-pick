@@ -25,7 +25,7 @@
   --page:#f4f4f1; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
   --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.08); --wash:#efeee9;
   --up:#d03b3b; --up-soft:#fbe6e4; --dn:#2a78d6; --dn-soft:#e3eefb;
-  --accent:#eb6834; --warn-soft:#fdf1d6; --warn-ink:#7a5200;
+  --accent:#eb6834; --m5:#eb6834; --m20:#52514e; --warn-soft:#fdf1d6; --warn-ink:#7a5200;
   --f:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   color-scheme:light;
 }
@@ -33,12 +33,12 @@
   --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
   --grid:#2c2c2a; --axis:#45443f; --ring:rgba(255,255,255,.08); --wash:#252523;
   --up:#e66767; --up-soft:#3d2120; --dn:#3987e5; --dn-soft:#1b2c43;
-  --accent:#d95926; --warn-soft:#3a2f14; --warn-ink:#fab219; color-scheme:dark}}
+  --accent:#d95926; --m5:#e0703f; --m20:#c3c2b7; --warn-soft:#3a2f14; --warn-ink:#fab219; color-scheme:dark}}
 :root[data-theme="dark"]{
   --page:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
   --grid:#2c2c2a; --axis:#45443f; --ring:rgba(255,255,255,.08); --wash:#252523;
   --up:#e66767; --up-soft:#3d2120; --dn:#3987e5; --dn-soft:#1b2c43;
-  --accent:#d95926; --warn-soft:#3a2f14; --warn-ink:#fab219; color-scheme:dark}
+  --accent:#d95926; --m5:#e0703f; --m20:#c3c2b7; --warn-soft:#3a2f14; --warn-ink:#fab219; color-scheme:dark}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--page);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.5;letter-spacing:-.005em;
@@ -122,22 +122,42 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .prow.now + .prow{border-top:0}
 .prow.mine .lb{color:var(--accent)}
 
-/* 수급: 순매수 + 평단 대비 한 차트 */
-.sup-head,.srow{display:grid;grid-template-columns:40px 1fr 1fr;gap:10px;align-items:center}
-.sup-head{font-size:11px;font-weight:600;color:var(--ink2);line-height:1.3;padding-bottom:8px}
-.sup-head em{display:block;font-style:normal;font-weight:500;color:var(--muted)}
-.sgrp{font-size:12px;font-weight:700;color:var(--ink);margin-top:10px;padding:6px 0 2px;border-top:1px solid var(--grid)}
-.srow{min-height:34px}
-.srow .lb{font-size:12px;color:var(--ink2);white-space:nowrap}
-.scell{display:grid;grid-template-columns:1fr 50px;gap:6px;align-items:center;min-width:0}
-.scell .tr{position:relative;height:12px}
-.scell .tr::before{content:"";position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:var(--axis)}
-.scell .bar{position:absolute;top:1px;height:10px}
-.scell .bar.p{left:50%;background:var(--up);border-radius:0 4px 4px 0}
-.scell .bar.n{right:50%;background:var(--dn);border-radius:4px 0 0 4px}
-.scell .vv{font-size:13px;font-weight:650;text-align:right;white-space:nowrap;line-height:1.2}
-.scell .sub{display:block;font-size:10px;color:var(--muted);font-weight:500}
-.scell.none{color:var(--muted);font-size:12px;text-align:center;display:block}
+/* 이평·볼린저 밴드 차트 */
+.band{margin:4px 0 14px;padding:0 2px}
+.band .lane{position:relative;height:20px;font-size:12px;color:var(--ink2)}
+.band .bl{position:absolute;top:2px;white-space:nowrap;line-height:16px}
+.band .bl.c{transform:translateX(-50%)} .band .bl.l{transform:translateX(-8px)} .band .bl.r{transform:translateX(calc(-100% + 8px))}
+.band .bl b{font-weight:650;color:var(--ink)}
+.band .bl.now{font-weight:700;color:var(--ink)}
+.band .track{position:relative;height:24px;margin:2px 0 4px}
+.band .track::before{content:"";position:absolute;left:0;right:0;top:11.5px;height:1px;background:var(--grid)}
+.band .zone{position:absolute;top:4px;height:16px;border-radius:4px;background:var(--wash);box-shadow:inset 0 0 0 1px var(--axis)}
+.band .mk{position:absolute;top:0;width:3px;height:24px;margin-left:-1.5px;border-radius:2px}
+.band .dot{position:absolute;top:5px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px var(--surface)}
+.m5{background:var(--m5)} .m20{background:var(--m20)}
+.band .sw{display:inline-block;width:3px;height:11px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.prow.m5 .lb::before,.prow.m20 .lb::before{content:"";display:inline-block;width:3px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.prow.m5 .lb::before{background:var(--m5)} .prow.m20 .lb::before{background:var(--m20)}
+.prow.m5,.prow.m20{background:none}
+
+/* 기관·외인 수급 가로 막대 */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--wash);padding:3px;border-radius:10px;margin-bottom:12px}
+.seg button{border:0;background:transparent;padding:7px 4px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--ring)}
+.hbars{display:grid}
+.hgrp{font-size:12px;font-weight:700;color:var(--ink);padding:10px 0 4px;border-top:1px solid var(--grid)}
+.hgrp:first-child{border-top:0;padding-top:0}
+.hrow{display:grid;grid-template-columns:58px 1fr;gap:8px;align-items:center;min-height:30px}
+.hrow .lb{font-size:13px;color:var(--ink2);line-height:1.15}
+.hrow .lb em{display:block;font-style:normal;font-size:10.5px;color:var(--muted)}
+.hrow.sum .lb{color:var(--ink);font-weight:650}
+.hrow .tr{position:relative;height:22px}
+.hrow .tr::before{content:"";position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:var(--axis)}
+.hrow .bar{position:absolute;top:5px;height:12px}
+.hrow .bar.p{left:50%;background:var(--up);border-radius:0 4px 4px 0}
+.hrow .bar.n{right:50%;background:var(--dn);border-radius:4px 0 0 4px}
+.hrow.sum .bar{height:14px;top:4px}
+.hrow .hv{position:absolute;top:2px;font-size:13px;font-weight:700;white-space:nowrap;line-height:18px}
 .part{display:inline-block;font-size:10px;font-weight:600;padding:0 5px;border-radius:999px;background:var(--warn-soft);color:var(--warn-ink);margin-left:4px;vertical-align:1px}
 
 /* 전체 값 표 */
@@ -324,46 +344,83 @@ function refCard(r, k){
   return `<div class="card"><h2>${title}</h2><div class="plist">${priceRows(shown)}</div></div>`;
 }
 function lineCard(r){
+  const cur = r["현재가"], m5 = r["5일선"], m20 = r["20일선"], up = r["볼린저up"], lo = r["볼린저lo"];
+  const ok = v => isNum(v) && v !== 0;
   const items = [
-    ["볼린저 상단", "", r["볼린저up"], r["볼린저up_대비"], "현재가 대비"],
-    ["20일선", "", r["20일선"], r["20일선대비"], "현재가 위치"],
-    ["5일선", "", r["5일선"], r["5일선대비"], "현재가 위치"],
-    ["볼린저 하단", "", r["볼린저lo"], r["볼린저lo_대비"], "현재가 대비"],
-  ].filter(it => isNum(it[2]) && it[2] !== 0);
-  if (!items.length || !isNum(r["현재가"])) return "";
-  items.push(["현재가", "", r["현재가"], undefined, "", "now"]);
-  items.sort((a, b) => b[2] - a[2] || (a[5] === "now" ? -1 : 1));
-  return `<div class="card"><h2>이동평균선 · 볼린저 밴드 <small>높은 가격순</small></h2><div class="plist">${priceRows(items)}</div>
+    ["현재가", "", cur, undefined, "", "now"],
+    ["5일선", "", m5, r["5일선대비"], "현재가 위치", "m5"],
+    ["20일선", "", m20, r["20일선대비"], "현재가 위치", "m20"],
+    ["볼린저 상단", "", up, r["볼린저up_대비"], "현재가 대비"],
+    ["볼린저 하단", "", lo, r["볼린저lo_대비"], "현재가 대비"],
+  ].filter(it => ok(it[2]));
+  if (!ok(cur) || items.length < 2) return "";
+  return `<div class="card"><h2>이동평균선 · 볼린저 밴드</h2>${bandChart(cur, m5, m20, up, lo)}
+    <div class="plist">${priceRows(items)}</div>
     <div class="note">%는 엑셀 값 그대로입니다. 이평선은 현재가가 선보다 몇 % 위(+)·아래(−)인지, 볼린저는 밴드가 현재가보다 몇 % 위(+)·아래(−)인지입니다.</div></div>`;
 }
+/* 밴드 차트: 볼린저 하단~상단을 띠로, 5일선·20일선은 세로 표시, 현재가는 점 */
+function bandChart(cur, m5, m20, up, lo){
+  const ok = v => isNum(v) && v !== 0;
+  const vals = [cur, m5, m20, up, lo].filter(ok);
+  let a = Math.min(...vals), b = Math.max(...vals);
+  const pad = (b - a) * 0.08 || a * 0.05; a -= pad; b += pad;
+  const x = v => (v - a) / (b - a) * 100;
+  const lbl = (v, html, cls2 = "") => {
+    const p = x(v), anchor = p < 18 ? "l" : p > 82 ? "r" : "c";
+    return `<span class="bl ${anchor} ${cls2}" style="left:${p.toFixed(2)}%">${html}</span>`;
+  };
+  const zone = ok(up) && ok(lo) ? `<i class="zone" style="left:${x(lo).toFixed(2)}%;width:${(x(up) - x(lo)).toFixed(2)}%"></i>` : "";
+  const mk = (v, c) => ok(v) ? `<i class="mk ${c}" style="left:${x(v).toFixed(2)}%"></i>` : "";
+  const ends = [];
+  if (ok(lo)) ends.push(lbl(lo, `하단 <b class="tn">${fInt(lo)}</b>`));
+  if (ok(up)) ends.push(lbl(up, `상단 <b class="tn">${fInt(up)}</b>`));
+  const narrow = ok(up) && ok(lo) && x(up) - x(lo) < 40;   // 띠가 좁으면 상단 글자를 한 줄 아래로
+  return `<div class="band" role="img" aria-label="볼린저 밴드 안에서 현재가와 이동평균선 위치">
+    <div class="lane">${lbl(cur, `현재가 <b class="tn">${fInt(cur)}</b>`, "now")}</div>
+    <div class="track">${zone}${mk(m20, "m20")}${mk(m5, "m5")}<i class="dot" style="left:${x(cur).toFixed(2)}%"></i></div>
+    <div class="lane">${ok(m5) ? lbl(m5, `<i class="sw m5"></i>5일선 <b class="tn">${fInt(m5)}</b>`) : ""}</div>
+    <div class="lane">${ok(m20) ? lbl(m20, `<i class="sw m20"></i>20일선 <b class="tn">${fInt(m20)}</b>`) : ""}</div>
+    ${narrow ? `<div class="lane">${ends[0] || ""}</div><div class="lane">${ends[1] || ""}</div>` : `<div class="lane">${ends.join("")}</div>`}
+  </div>`;
+}
 const full = s => { if (blank(s)) return true; const m = String(s).match(/^(\d+)\/(\d+)$/); return !m || m[1] === m[2]; };
-function scell(v, max, sub, part){
-  if (v === undefined) return `<div class="scell none">—</div>`;
-  const bar = isNum(v) && v !== 0 ? `<i class="bar ${v > 0 ? "p" : "n"}" style="width:${(Math.abs(v) / max * 50).toFixed(2)}%"></i>` : "";
-  return `<div class="scell"><div class="tr">${bar}</div>
-    <div class="vv tn ${cls(v)}">${fPct(v)}${part ? `<span class="part">${esc(part)}</span>` : ""}${sub ? `<span class="sub">${sub}</span>` : ""}</div></div>`;
-}
+let SUP_MODE = store.get("sp_sup") === "avg" ? "avg" : "flow";
 function supplyCard(r){
-  const per = [["5","5일"],["20거래일","20일"],["60거래일","60일"],["120거래일","120일"]];
+  const per = [["5","5거래일"],["20거래일","20거래일"],["60거래일","60거래일"],["120거래일","120거래일"]];
   const flowCol = (inv, key) => inv === "합계" ? `${key}순매수` : `${inv}_순매수(${key})`;
-  const groups = ["기관","외인","합계"].map(inv => ({ inv, rows: per.map(([key, lb]) => {
-    const fc = flowCol(inv, key), cov = r[fc + "_자료확보"];
-    const n = key === "5" ? null : key.replace("거래일", "");
-    const avg = inv !== "합계" && n ? { v: r[`${n}거래일/${inv}(평단%)`], p: r[`${n}거래일/${inv}(평단)`] } : null;
-    return { lb, flow: r[fc], part: full(cov) ? "" : cov, avg };
-  }) }));
-  const flows = groups.flatMap(g => g.rows.map(x => x.flow)).filter(isNum);
-  const avgs = groups.flatMap(g => g.rows.map(x => x.avg && x.avg.v)).filter(isNum);
-  if (!flows.length && !avgs.length) return "";
-  const fMax = Math.max(0, ...flows.map(Math.abs)) || 1, aMax = Math.max(0, ...avgs.map(Math.abs)) || 1;
-  const body = groups.map(g => `<div class="sgrp">${g.inv}${g.inv === "합계" ? " (기관+외인)" : ""}</div>` + g.rows.map(x =>
-    `<div class="srow"><div class="lb">${x.lb}</div>${scell(x.flow, fMax, "", x.part)}${
-      x.avg ? scell(x.avg.v, aMax, "평단 " + fInt(x.avg.p)) : scell(undefined)}</div>`).join("")).join("");
+  let groups;
+  if (SUP_MODE === "flow"){
+    groups = per.map(([key, title]) => ({ title, rows: ["기관","외인","합계"].map(inv => {
+      const c = flowCol(inv, key), cov = r[c + "_자료확보"];
+      return { lb: inv, v: r[c], part: full(cov) ? "" : cov, sum: inv === "합계" };
+    }) }));
+  } else {
+    groups = per.slice(1).map(([key, title]) => ({ title, rows: ["기관","외인"].map(inv => {
+      const n = key.replace("거래일", "");
+      return { lb: inv, v: r[`${n}거래일/${inv}(평단%)`], sub: "평단 " + fInt(r[`${n}거래일/${inv}(평단)`]) };
+    }) }));
+  }
+  const nums = groups.flatMap(g => g.rows.map(x => x.v)).filter(isNum);
+  const max = Math.max(0, ...nums.map(Math.abs)) || 1;
+  const body = groups.map(g => `<div class="hgrp">${g.title}</div>` + g.rows.map(x => {
+    const v = x.v, w = isNum(v) ? Math.abs(v) / max * 34 : 0;          // 막대 최대 34% → 값 글자 자리 확보
+    const bar = isNum(v) && v !== 0 ? `<i class="bar ${v > 0 ? "p" : "n"}" style="width:${w.toFixed(2)}%"></i>` : "";
+    const tpos = !isNum(v) || v === 0 ? `left:50%;margin-left:6px` : v > 0 ? `left:${(50 + w).toFixed(2)}%;margin-left:6px` : `right:${(50 + w).toFixed(2)}%;margin-right:6px`;
+    return `<div class="hrow ${x.sum ? "sum" : ""}"><div class="lb">${x.lb}${x.sub ? `<em class="tn">${x.sub}</em>` : ""}</div>
+      <div class="tr">${bar}<span class="hv tn ${cls(v)}" style="${tpos}">${fPct(v)}${x.part ? `<span class="part">${esc(x.part)}</span>` : ""}</span></div></div>`;
+  }).join("")).join("");
+  const seg = (m, t) => `<button type="button" data-sup="${m}" aria-pressed="${SUP_MODE === m}">${t}</button>`;
+  const cap = SUP_MODE === "flow" ? "상장주식수 대비 순매수 %. 노란 표시는 자료가 일부만 확보된 기간(확보일/전체일)입니다."
+    : "현재가가 기관·외인 매수평단보다 몇 % 위(+)·아래(−)인지입니다. 5거래일 평단은 엑셀에 없습니다.";
   return `<div class="card"><h2>기관 · 외인 수급</h2>
-    <div class="sup-head"><div></div><div>순매수<em>상장주식수 대비 %</em></div><div>평단 대비 현재가<em>% · +면 평단보다 위</em></div></div>
-    ${body}
-    <div class="note">기간은 거래일 기준입니다. 노란 표시는 자료가 일부만 확보된 기간(확보일/전체일)입니다.</div></div>`;
+    <div class="seg">${seg("flow", "순매수")}${seg("avg", "평단 대비 현재가")}</div>
+    <div class="hbars">${body}</div><div class="note">${cap}</div></div>`;
 }
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-sup]"); if (!b) return;
+  SUP_MODE = b.dataset.sup; store.set("sp_sup", SUP_MODE);
+  const y = window.scrollY; showRow(+$("sel").value); window.scrollTo(0, y);
+});
 function allCard(k, i){
   const s = sheet(k), row = s.rows[i];
   const body = s.cols.map((c, j) => `<tr><td>${esc(c)}</td><td>${colored(c, row[j])}</td></tr>`).join("");
