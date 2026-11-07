@@ -126,10 +126,11 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 /* 이평·볼린저 밴드 차트 */
 .band{position:relative;margin:4px 0 14px;padding:0 2px}
 .band .leads{position:absolute;top:0;bottom:0;left:2px;right:2px;pointer-events:none}
-.band .ld{position:absolute;width:0;border-left:1.5px dotted var(--muted);margin-left:-.75px}
+.band .ld{position:absolute;width:0;border-left:1.5px dotted var(--axis);margin-left:-.75px}
 .band .lane{position:relative;z-index:1;height:20px;font-size:12px;color:var(--ink2)}
 .band .bl{position:absolute;top:2px;white-space:nowrap;line-height:16px;background:var(--surface);padding:0 3px;border-radius:3px}
-.band .bl.c{transform:translateX(-50%)} .band .bl.l{transform:translateX(-8px)} .band .bl.r{transform:translateX(calc(-100% + 8px))}
+/* 이름표 첫 글자를 점선에 맞춤(padding 3px 만큼 당김). 오른쪽 끝에서 넘치면 끝 글자를 맞춤 */
+.band .bl.l{transform:translateX(-3px)} .band .bl.r{transform:translateX(calc(-100% + 3px))}
 .band .bl b{font-weight:650;color:var(--ink)}
 .band .bl.now{font-weight:700;color:var(--ink)}
 .band .track{position:relative;height:24px;margin:2px 0 4px}
@@ -138,9 +139,6 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .band .mazone{position:absolute;top:4px;height:16px;background:var(--ma)}
 .band .dot{position:absolute;top:8px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--now);box-shadow:0 0 0 2px var(--now-ring)}
 .m5,.m20{background:var(--ma)}
-.band .sw{display:inline-block;width:4px;height:11px;border-radius:2px;margin-right:4px;vertical-align:-1px}
-.prow.m5 .lb::before,.prow.m20 .lb::before{content:"";display:inline-block;width:3px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-.prow.m5 .lb::before,.prow.m20 .lb::before{background:var(--ma)}
 .prow.m5,.prow.m20{background:none}
 
 /* 기관·외인 수급 가로 막대 */
@@ -366,7 +364,7 @@ function bandChart(cur, m5, m20, up, lo){
   const pad = (b - a) * 0.08 || a * 0.05; a -= pad; b += pad;
   const x = v => (v - a) / (b - a) * 100;
   const lbl = (v, html, cls2 = "") => {
-    const p = x(v), anchor = p < 18 ? "l" : p > 82 ? "r" : "c";
+    const p = x(v), anchor = "l";
     return `<span class="bl ${anchor} ${cls2}" style="left:${p.toFixed(2)}%">${html}</span>`;
   };
   const mazone = ok(m5) && ok(m20) ? `<i class="mazone" style="left:${x(Math.min(m5, m20)).toFixed(2)}%;width:${Math.abs(x(m5) - x(m20)).toFixed(2)}%"></i>` : "";   // 5일선~20일선 구간
@@ -381,8 +379,8 @@ function bandChart(cur, m5, m20, up, lo){
   return `<div class="band" role="img" aria-label="볼린저 밴드 안에서 현재가와 이동평균선 위치">
     <div class="lane">${lbl(cur, `현재가 <b class="tn">${fInt(cur)}</b>`, "now")}</div>
     <div class="track">${zone}${mazone}<i class="dot" style="left:${x(cur).toFixed(2)}%"></i></div>
-    <div class="lane">${ok(m5) ? lbl(m5, `<i class="sw m5"></i>5일선 <b class="tn">${fInt(m5)}</b>`) : ""}</div>
-    <div class="lane">${ok(m20) ? lbl(m20, `<i class="sw m20"></i>20일선 <b class="tn">${fInt(m20)}</b>`) : ""}</div>
+    <div class="lane">${ok(m5) ? lbl(m5, `5일선 <b class="tn">${fInt(m5)}</b>`) : ""}</div>
+    <div class="lane">${ok(m20) ? lbl(m20, `20일선 <b class="tn">${fInt(m20)}</b>`) : ""}</div>
     ${narrow ? `<div class="lane">${ends[0] || ""}</div><div class="lane">${ends[1] || ""}</div>` : `<div class="lane">${ends.join("")}</div>`}
     <div class="leads">${leads}</div>
   </div>`;
@@ -435,6 +433,12 @@ function allCard(k, i){
 }
 
 let CUR = 0;
+/* 밴드 이름표가 오른쪽으로 넘치면 끝 글자를 점선에 맞추도록 바꿈 */
+function fitBandLabels(){
+  document.querySelectorAll(".band .bl.l").forEach(el => {
+    if (el.offsetLeft - 3 + el.offsetWidth > el.parentElement.clientWidth){ el.classList.remove("l"); el.classList.add("r"); }
+  });
+}
 function render(){
   const s = sheet(TAB), n = s.rows.length, chips = $("chips");
   document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === TAB));
@@ -463,6 +467,7 @@ function showRow(i, smooth = true){
   const r = rowObj(TAB, i);
   $("view").innerHTML = heroCard(r, TAB) + (TAB === "buy" ? holdCard(r) : "") + refCard(r, TAB) + lineCard(r)
     + supplyCard(r) + allCard(TAB, i);
+  fitBandLabels();
 }
 
 function start(data){
