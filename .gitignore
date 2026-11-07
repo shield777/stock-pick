@@ -1,0 +1,9 @@
+*
+!index.html
+!data.enc.json
+!robots.txt
+!README.md
+!.gitignore
+!.nojekyll
+!manifest.webmanifest
+!*.png

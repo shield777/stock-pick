@@ -1,0 +1,16 @@
+{
+ "name": "관심종목",
+ "short_name": "관심종목",
+ "description": "매수종목·2개월이내 관심종목 최근 결과",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#f4f4f1",
+ "theme_color": "#f4f4f1",
+ "lang": "ko",
+ "icons": [
+  {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+  {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+  {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+ ]
+}
