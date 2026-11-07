@@ -124,9 +124,11 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .prow.mine .lb{color:var(--accent)}
 
 /* 이평·볼린저 밴드 차트 */
-.band{margin:4px 0 14px;padding:0 2px}
-.band .lane{position:relative;height:20px;font-size:12px;color:var(--ink2)}
-.band .bl{position:absolute;top:2px;white-space:nowrap;line-height:16px}
+.band{position:relative;margin:4px 0 14px;padding:0 2px}
+.band .leads{position:absolute;top:0;bottom:0;left:2px;right:2px;pointer-events:none}
+.band .ld{position:absolute;width:0;border-left:1.5px dotted var(--muted);margin-left:-.75px}
+.band .lane{position:relative;z-index:1;height:20px;font-size:12px;color:var(--ink2)}
+.band .bl{position:absolute;top:2px;white-space:nowrap;line-height:16px;background:var(--surface);padding:0 3px;border-radius:3px}
 .band .bl.c{transform:translateX(-50%)} .band .bl.l{transform:translateX(-8px)} .band .bl.r{transform:translateX(calc(-100% + 8px))}
 .band .bl b{font-weight:650;color:var(--ink)}
 .band .bl.now{font-weight:700;color:var(--ink)}
@@ -140,8 +142,6 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .prow.m5 .lb::before,.prow.m20 .lb::before{content:"";display:inline-block;width:3px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 .prow.m5 .lb::before,.prow.m20 .lb::before{background:var(--ma)}
 .prow.m5,.prow.m20{background:none}
-.band .nowsw{width:8px;height:8px;border-radius:50%;background:var(--now);box-shadow:0 0 0 1.5px var(--now-ring);vertical-align:0}
-.prow.now .lb::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--now);box-shadow:0 0 0 1.5px var(--now-ring);margin-right:6px;vertical-align:1px}
 
 /* 기관·외인 수급 가로 막대 */
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--wash);padding:3px;border-radius:10px;margin-bottom:12px}
@@ -375,12 +375,16 @@ function bandChart(cur, m5, m20, up, lo){
   if (ok(lo)) ends.push(lbl(lo, `하단 <b class="tn">${fInt(lo)}</b>`));
   if (ok(up)) ends.push(lbl(up, `상단 <b class="tn">${fInt(up)}</b>`));
   const narrow = ok(up) && ok(lo) && x(up) - x(lo) < 40;   // 띠가 좁으면 상단 글자를 한 줄 아래로
+  // 이름표와 위치를 잇는 점선 (줄 높이 20px, 띠 22~46px: 띠 윗변 26 · 아랫변 42 · 현재가 점 30)
+  const ld = (v, y1, y2) => ok(v) ? `<i class="ld" style="left:${x(v).toFixed(2)}%;top:${y1}px;height:${y2 - y1}px"></i>` : "";
+  const leads = ld(cur, 17, 30) + ld(m5, 42, 52) + ld(m20, 42, 72) + ld(lo, 42, 92) + ld(up, 42, narrow ? 112 : 92);
   return `<div class="band" role="img" aria-label="볼린저 밴드 안에서 현재가와 이동평균선 위치">
-    <div class="lane">${lbl(cur, `<i class="sw nowsw"></i>현재가 <b class="tn">${fInt(cur)}</b>`, "now")}</div>
+    <div class="lane">${lbl(cur, `현재가 <b class="tn">${fInt(cur)}</b>`, "now")}</div>
     <div class="track">${zone}${mazone}<i class="dot" style="left:${x(cur).toFixed(2)}%"></i></div>
     <div class="lane">${ok(m5) ? lbl(m5, `<i class="sw m5"></i>5일선 <b class="tn">${fInt(m5)}</b>`) : ""}</div>
     <div class="lane">${ok(m20) ? lbl(m20, `<i class="sw m20"></i>20일선 <b class="tn">${fInt(m20)}</b>`) : ""}</div>
     ${narrow ? `<div class="lane">${ends[0] || ""}</div><div class="lane">${ends[1] || ""}</div>` : `<div class="lane">${ends.join("")}</div>`}
+    <div class="leads">${leads}</div>
   </div>`;
 }
 const full = s => { if (blank(s)) return true; const m = String(s).match(/^(\d+)\/(\d+)$/); return !m || m[1] === m[2]; };
