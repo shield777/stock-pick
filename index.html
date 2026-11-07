@@ -124,8 +124,8 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .prow.mine .lb{color:var(--accent)}
 
 /* 이평·볼린저 밴드 차트 */
-.band{position:relative;margin:4px 0 14px;padding:0 2px}
-.band .leads{position:absolute;top:0;bottom:0;left:2px;right:2px;pointer-events:none}
+.band{position:relative;margin:4px 0 14px;padding:0 6px}
+.band .leads{position:absolute;top:0;bottom:0;left:6px;right:6px;pointer-events:none}
 .band .ld{position:absolute;width:0;border-left:1.5px dotted var(--axis);margin-left:-.75px}
 .band .lane{position:relative;z-index:1;height:20px;font-size:12px;color:var(--ink2)}
 .band .bl{position:absolute;top:2px;white-space:nowrap;line-height:16px;background:var(--surface);padding:0 3px;border-radius:3px}
@@ -361,7 +361,7 @@ function bandChart(cur, m5, m20, up, lo){
   const ok = v => isNum(v) && v !== 0;
   const vals = [cur, m5, m20, up, lo].filter(ok);
   let a = Math.min(...vals), b = Math.max(...vals);
-  const pad = (b - a) * 0.08 || a * 0.05; a -= pad; b += pad;
+  if (a === b){ a -= 1; b += 1; }   // 가로 길이 = 다섯 가격 중 최저~최고 (여백 없음)
   const x = v => (v - a) / (b - a) * 100;
   const lbl = (v, html, cls2 = "") => {
     const p = x(v), anchor = "l";
