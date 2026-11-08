@@ -45,7 +45,7 @@ body{margin:0;background:var(--page);color:var(--ink);font-family:var(--f);font-
   -webkit-font-smoothing:antialiased;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-top:max(16px,env(safe-area-inset-top,0px));padding-bottom:max(40px,env(safe-area-inset-bottom,0px))}
-.wrap{max-width:560px;margin:0 auto;display:grid;gap:12px}
+.wrap{max-width:560px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .stack{display:grid;gap:12px;min-width:0}
 .tn{font-variant-numeric:tabular-nums}
 button,select,input{font:inherit;color:inherit}
@@ -67,10 +67,30 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .tab[aria-selected="true"] b{color:var(--ink2)}
 
 /* 종목 선택 */
-.chips{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
-  margin:0 -16px;padding:8px 16px 8px;scroll-padding:0 16px;scrollbar-width:none;
-  position:sticky;top:0;z-index:5;background:var(--page)}   /* 화면을 내려도 위에 고정 */
-.chips.stuck{box-shadow:0 1px 0 var(--grid),0 6px 12px -8px rgba(0,0,0,.18)}
+.chipbar{position:sticky;top:0;z-index:5;background:var(--page);margin:0 -16px;display:flex;align-items:center}   /* 화면을 내려도 위에 고정 */
+.chipbar.stuck{box-shadow:0 1px 0 var(--grid),0 6px 12px -8px rgba(0,0,0,.18)}
+.chips{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+  padding:8px 16px;scroll-padding:0 16px;scrollbar-width:none}
+/* 종목 목록 좌우 버튼: 마우스를 쓰는 PC에서만 보임 */
+.cnav{display:none}
+@media (hover:hover) and (pointer:fine){
+  .chipbar{padding:0 10px}
+  .chips{padding:8px 6px;scroll-padding:0 6px}
+  .cnav{display:block;flex:none;width:34px;height:34px;border:0;border-radius:50%;background:var(--surface);box-shadow:0 0 0 1px var(--ring);
+    font-size:20px;line-height:1;color:var(--ink2);cursor:pointer}
+  .cnav:hover:not(:disabled){color:var(--ink);box-shadow:0 0 0 1px var(--axis)}
+  .cnav:disabled{opacity:.3;cursor:default}
+  .chipbar.fit .cnav{visibility:hidden}
+}
+/* 종목 카드 묶음: 휴대폰은 한 줄로 쌓고, 넓은 화면은 두 칸 */
+.col{display:contents}
+@media (min-width:768px){
+  .wrap{max-width:1080px}
+  .tabs{max-width:420px}
+  #view{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+  #view .col{display:grid;gap:12px;min-width:0}
+  #view .full{grid-column:1/-1}
+}
 .chips::-webkit-scrollbar{display:none}
 .pick{flex:none;scroll-snap-align:start;border:0;background:var(--surface);box-shadow:0 0 0 1px var(--ring);border-radius:12px;
   padding:8px 13px 7px;text-align:left;cursor:pointer;line-height:1.25}
@@ -219,7 +239,11 @@ details[open] summary::after{content:"접기"}
     <button class="tab" role="tab" data-tab="buy" id="t-buy">매수종목<b></b></button>
     <button class="tab" role="tab" data-tab="recent" id="t-recent">2개월이내<b></b></button>
   </div>
-  <div class="chips" id="chips" role="tablist" aria-label="종목 선택 (옆으로 밀어서 보기)"></div>
+  <div class="chipbar" id="chipbar">
+    <button class="cnav" id="cprev" type="button" aria-label="종목 목록 왼쪽으로">‹</button>
+    <div class="chips" id="chips" role="tablist" aria-label="종목 선택 (옆으로 밀어서 보기)"></div>
+    <button class="cnav" id="cnext" type="button" aria-label="종목 목록 오른쪽으로">›</button>
+  </div>
   <div id="view" class="stack"></div>
   <div class="card" id="errCard" hidden>
     <details><summary id="errSum"></summary><ul class="errs" id="errList"></ul></details>
@@ -467,6 +491,7 @@ function render(){
   if (!(i >= 0 && i < n)) i = 0;
   chips.scrollLeft = 0;
   showRow(i, false);
+  requestAnimationFrame(updateChipNav);
 }
 function showRow(i, smooth = true){
   CUR = i;
@@ -479,8 +504,8 @@ function showRow(i, smooth = true){
     chips.scrollTo({ left: Math.max(0, left), behavior: smooth ? "smooth" : "auto" });
   }
   const r = rowObj(TAB, i);
-  $("view").innerHTML = heroCard(r, TAB) + (TAB === "buy" ? holdCard(r) : "") + volCard(r, TAB) + lineCard(r)
-    + supplyCard(r) + allCard(TAB, i);
+  $("view").innerHTML = `<div class="col">${heroCard(r, TAB) + (TAB === "buy" ? holdCard(r) : "") + volCard(r, TAB)}</div>`
+    + `<div class="col">${lineCard(r) + supplyCard(r)}</div>` + `<div class="full">${allCard(TAB, i)}</div>`;
   fitBandLabels();
 }
 
@@ -509,11 +534,26 @@ document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () =>
 $("chips").addEventListener("click", e => {
   const b = e.target.closest(".pick"); if (!b) return;
   showRow(+b.dataset.i);
-  const top = $("view").getBoundingClientRect().top + window.scrollY - $("chips").offsetHeight - 8;   // 내려가 있으면 새 종목의 맨 위로
+  const top = $("view").getBoundingClientRect().top + window.scrollY - $("chipbar").offsetHeight - 8;   // 내려가 있으면 새 종목의 맨 위로
   if (window.scrollY > top) window.scrollTo(0, top);
 });
+/* PC: 좌우 버튼으로 종목 목록 넘기기, 마우스 휠도 가로로 */
+function updateChipNav(){
+  const c = $("chips"), max = c.scrollWidth - c.clientWidth;
+  $("chipbar").classList.toggle("fit", max <= 2);
+  $("cprev").disabled = c.scrollLeft <= 2;
+  $("cnext").disabled = c.scrollLeft >= max - 2;
+}
+$("cprev").addEventListener("click", () => $("chips").scrollBy({ left: -$("chips").clientWidth * 0.8, behavior: "smooth" }));
+$("cnext").addEventListener("click", () => $("chips").scrollBy({ left: $("chips").clientWidth * 0.8, behavior: "smooth" }));
+$("chips").addEventListener("scroll", updateChipNav, { passive: true });
+window.addEventListener("resize", updateChipNav);
+$("chips").addEventListener("wheel", e => {
+  const c = $("chips");
+  if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && c.scrollWidth > c.clientWidth){ c.scrollLeft += e.deltaY; e.preventDefault(); }
+}, { passive: false });
 /* 고정된 상태일 때만 아래 그림자 */
-window.addEventListener("scroll", () => { const c = $("chips"); c.classList.toggle("stuck", c.getBoundingClientRect().top <= 0.5 && window.scrollY > 0); }, { passive: true });
+window.addEventListener("scroll", () => { const c = $("chipbar"); c.classList.toggle("stuck", c.getBoundingClientRect().top <= 0.5 && window.scrollY > 0); }, { passive: true });
 /* 종목 카드 영역을 옆으로 밀어도 이전/다음 종목으로 */
 (() => {
   let sx = 0, sy = 0, on = false;
