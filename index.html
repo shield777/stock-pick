@@ -301,7 +301,12 @@ function heroCard(r, k){
     return ps + (ps && ds ? "<br>" : "") + ds; };
   const tiles = [
     ["주간등락률", `<i class="${cls(r["주간등락률"])}">${fPct(r["주간등락률"])}${isNum(r["주간등락률"]) && r["주간등락률"] !== 0 ? "%" : ""}</i>`, ""],
-    ["기준가", fInt(r["기준가"]), "관심 등록"],
+    ["기준가", fInt(r["기준가"]), (() => {   // 기준가 대비 현재가 등락률 (엑셀에 없는 열이라 화면에서 계산: 현재가 ÷ 기준가 − 1)
+      const c = r["현재가"], s = r["기준가"];
+      if (!isNum(c) || !isNum(s) || s === 0) return "";
+      const v = Math.round((c / s * 100 - 100) * 100) / 100;
+      return `<i class="${cls(v)}">${v === 0 ? "0.00" : fPct(v)}%</i><br>현재가`;
+    })()],
   ];
   if (k === "recent") tiles.push(
     ["5거래일 고가", fInt(r["5고가"]), pctEm(r["5고가_기준대비"], r["5고가일"])],
@@ -317,7 +322,7 @@ function heroCard(r, k){
       <div class="wk"><span>시가총액</span><b class="tn">${fCap(r["시가총액"])}</b></div>
     </div>
     <div class="tiles five tn">${tiles.map(tile).join("")}</div>
-    <div class="note" style="margin-top:6px">고가·최고가 아래 %는 기준가 대비입니다.</div>
+    <div class="note" style="margin-top:6px">기준가 아래 %는 기준가 대비 현재가, 고가·최고가 아래 %는 기준가 대비입니다.</div>
     <div class="days-cap">최근 4거래일 등락률 · D = ${fDate(DATA.asof.replaceAll("-",""))}</div>
     <div class="days tn">${days}</div>
   </div>`;
