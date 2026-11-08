@@ -91,6 +91,12 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
   #view .col{display:grid;gap:12px;min-width:0}
   #view .full{grid-column:1/-1}
 }
+.cinfo{font-size:12px;color:var(--ink2);min-height:18px;margin:-4px 0 6px;line-height:1.5}
+.cinfo b{font-weight:650;color:var(--ink)}
+.cbox{position:relative;touch-action:pan-y}
+.cbox svg{display:block}
+.cbox .ax{font-family:var(--f);font-size:10.5px;fill:var(--muted);font-variant-numeric:tabular-nums}
+.cbox .ax.bs{fill:var(--ink2);paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}
 .chips::-webkit-scrollbar{display:none}
 .pick{flex:none;scroll-snap-align:start;border:0;background:var(--surface);box-shadow:0 0 0 1px var(--ring);border-radius:12px;
   padding:8px 13px 7px;text-align:left;cursor:pointer;line-height:1.25}
@@ -379,6 +385,68 @@ function priceRows(items){
       <div class="pc tn">${pct === undefined ? "" : `<b class="${cls(pct)}">${pct === 0 ? "0.00" : fPct(pct)}${isNum(pct) ? "%" : ""}</b>${pcap ? `<em>${pcap}</em>` : ""}`}</div>
     </div>`).join("");
 }
+/* 최근 30거래일 주가 차트 (일봉 + 거래량). 자료: 웹 갱신 때 네이버 일봉을 함께 받아 암호화해 둔 것 */
+function chartCard(r, k, i){
+  const code = DATA.codes && DATA.codes[k] ? DATA.codes[k][i] : null;
+  const d = code && DATA.ohlc ? DATA.ohlc[code] : null;
+  if (!d || d.length < 2) return "";
+  return `<div class="card"><h2>최근 ${d.length}거래일 주가 <small class="tn">${esc(code)}</small></h2>
+    <div class="cinfo tn" id="cinfo"></div>
+    <div class="cbox" id="cbox" data-code="${esc(code)}" data-base="${isNum(r["기준가"]) ? r["기준가"] : ""}" data-reg="${esc(r["등록일자"] ?? "")}"></div>
+    <div class="note">빨강 = 오른 날(종가 &gt; 시가), 파랑 = 내린 날. 점선 = 기준가, 세로 점선 = 관심 등록일. 차트를 누르거나 마우스를 올리면 그날 값이 위에 나옵니다.</div></div>`;
+}
+function drawChart(){
+  const box = $("cbox"); if (!box) return;
+  const d = DATA.ohlc[box.dataset.code], n = d.length;
+  const W = Math.max(240, box.clientWidth), H = 220, padR = 50, plotW = W - padR;
+  const pT = 10, pH = 142, vT = 166, vH = 46;
+  let lo = Math.min(...d.map(x => x[3])), hi = Math.max(...d.map(x => x[2]));
+  const base = +box.dataset.base, span0 = hi - lo || hi * 0.05;
+  const baseIn = base > 0 && base >= lo - span0 * 0.15 && base <= hi + span0 * 0.15;   // 너무 멀면 차트를 찌그러뜨리지 않게 빼고 글로 표시
+  if (baseIn){ lo = Math.min(lo, base); hi = Math.max(hi, base); }
+  const pad = (hi - lo) * 0.05 || 1; lo -= pad; hi += pad;
+  const y = v => pT + (hi - v) / (hi - lo) * pH;
+  const step = plotW / n, cw = Math.max(2, Math.min(12, step * 0.62)), x = j => step * (j + 0.5);
+  const vmax = Math.max(...d.map(z => z[5])) || 1;
+  const col = z => z[4] > z[1] ? "var(--up)" : z[4] < z[1] ? "var(--dn)" : "var(--ink2)";
+  let s = "";
+  [hi - pad, (hi + lo) / 2, lo + pad].forEach(v => {   // 가로 눈금 3줄
+    s += `<line x1="0" x2="${plotW}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`
+       + `<text x="${plotW + 6}" y="${y(v) + 4}" class="ax">${fInt(Math.round(v))}</text>`;
+  });
+  s += `<line x1="0" x2="${plotW}" y1="${vT + vH}" y2="${vT + vH}" stroke="var(--grid)"/>`;
+  const ri = d.findIndex(z => z[0] === box.dataset.reg);
+  if (ri >= 0) s += `<line x1="${x(ri)}" x2="${x(ri)}" y1="${pT}" y2="${vT + vH}" stroke="var(--axis)" stroke-dasharray="2 3"/>`
+     + `<text x="${Math.min(plotW - 24, x(ri) + 3)}" y="${pT + pH - 3}" class="ax bs">등록</text>`;
+  if (baseIn) s += `<line x1="0" x2="${plotW}" y1="${y(base)}" y2="${y(base)}" stroke="var(--ink2)" stroke-dasharray="4 3" opacity=".7"/>`
+     + `<text x="4" y="${y(base) - 4}" class="ax bs">기준가 ${fInt(base)}</text>`;   // 기준가 글자는 차트 안 왼쪽 (오른쪽 눈금과 겹치지 않게)
+  d.forEach((z, j) => {
+    const c = col(z), xx = x(j);
+    s += `<line x1="${xx}" x2="${xx}" y1="${y(z[2])}" y2="${y(z[3])}" stroke="${c}" stroke-width="1"/>`;
+    const top = y(Math.max(z[1], z[4])), h = Math.max(1, Math.abs(y(z[1]) - y(z[4])));
+    s += `<rect x="${xx - cw / 2}" y="${top}" width="${cw}" height="${h}" fill="${c}" rx="1"/>`;
+    const vh = z[5] / vmax * vH;
+    s += `<rect x="${xx - cw / 2}" y="${vT + vH - vh}" width="${cw}" height="${vh}" fill="${c}" opacity=".35"/>`;
+  });
+  s += `<line id="cx" x1="0" x2="0" y1="${pT}" y2="${vT + vH}" stroke="var(--ink)" stroke-width="1" opacity="0"/>`
+     + `<rect id="chit" x="0" y="0" width="${plotW}" height="${H}" fill="transparent"/>`;
+  box.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 ${n}거래일 일봉과 거래량">${s}</svg>`
+    + (base > 0 && !baseIn ? `<div class="note" style="margin-top:2px">기준가 ${fInt(base)}원은 차트 범위 ${base > hi ? "위" : "아래"}에 있습니다.</div>` : "");
+  const show = j => {
+    const z = d[j], p = j > 0 ? d[j - 1][4] : null, chg = p ? Math.round((z[4] / p * 100 - 100) * 100) / 100 : null;
+    $("cinfo").innerHTML = `<b>${fShortDate(z[0])}</b> 시 ${fInt(z[1])} · 고 ${fInt(z[2])} · 저 ${fInt(z[3])} · 종 <b class="${cls(chg)}">${fInt(z[4])}</b>`
+      + (chg === null ? "" : ` <span class="${cls(chg)}">(${pctTxt(chg)})</span>`) + ` · 거래량 ${fInt(z[5])}`;
+    const l = $("cx"); l.setAttribute("x1", x(j)); l.setAttribute("x2", x(j)); l.setAttribute("opacity", j === n - 1 ? 0 : .35);
+  };
+  const pick = e => { const rc = box.querySelector("svg").getBoundingClientRect();
+    show(Math.max(0, Math.min(n - 1, Math.floor((e.clientX - rc.left) / step)))); };
+  const hit = $("chit");
+  hit.addEventListener("pointermove", pick);
+  hit.addEventListener("pointerdown", pick);
+  hit.addEventListener("pointerleave", () => show(n - 1));
+  show(n - 1);
+}
+window.addEventListener("resize", () => { clearTimeout(window._crt); window._crt = setTimeout(drawChart, 150); });
 function lineCard(r){
   const cur = r["현재가"], m5 = r["5일선"], m20 = r["20일선"], up = r["볼린저up"], lo = r["볼린저lo"];
   const ok = v => isNum(v) && v !== 0;
@@ -470,7 +538,7 @@ function allCard(k, i){
   return `<div class="card"><details><summary>엑셀 전체 값 (${s.cols.length}개 열)</summary><table class="kv">${body}</table></details></div>`;
 }
 
-let CUR = 0;
+let CUR = 0, ORDER = [];
 /* 밴드 이름표가 오른쪽으로 넘치면 끝 글자를 점선에 맞추도록 바꿈 */
 function fitBandLabels(){
   document.querySelectorAll(".band .bl.l").forEach(el => {
@@ -485,10 +553,13 @@ function render(){
     $("view").innerHTML = `<div class="card empty">이 탭에 해당하는 종목이 없습니다.</div>`;
     return;
   }
-  chips.innerHTML = s.rows.map((_, i) => { const r = rowObj(TAB, i);
+  ORDER = s.rows.map((_, i) => i);
+  if (TAB === "recent"){ const ci = s.cols.indexOf("등록일자");
+    ORDER.sort((a, b) => String(s.rows[b][ci]).localeCompare(String(s.rows[a][ci])) || a - b); }
+  chips.innerHTML = ORDER.map(i => { const r = rowObj(TAB, i);
     return `<button type="button" class="pick" role="tab" data-i="${i}"><b>${esc(r["종목명"])}</b><span class="tn">${fShortDate(r["등록일자"])} 등록</span></button>`; }).join("");
   let i = parseInt(store.get(KEY_SEL + TAB), 10);
-  if (!(i >= 0 && i < n)) i = 0;
+  if (!(i >= 0 && i < n)) i = ORDER[0];
   chips.scrollLeft = 0;
   showRow(i, false);
   requestAnimationFrame(updateChipNav);
@@ -505,8 +576,9 @@ function showRow(i, smooth = true){
   }
   const r = rowObj(TAB, i);
   $("view").innerHTML = `<div class="col">${heroCard(r, TAB) + (TAB === "buy" ? holdCard(r) : "") + volCard(r, TAB)}</div>`
-    + `<div class="col">${lineCard(r) + supplyCard(r)}</div>` + `<div class="full">${allCard(TAB, i)}</div>`;
+    + `<div class="col">${chartCard(r, TAB, i) + lineCard(r) + supplyCard(r)}</div>` + `<div class="full">${allCard(TAB, i)}</div>`;
   fitBandLabels();
+  drawChart();
 }
 
 function start(data){
@@ -563,7 +635,7 @@ window.addEventListener("scroll", () => { const c = $("chipbar"); c.classList.to
     if (!on) return; on = false;
     const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy, n = sheet(TAB).rows.length;
     if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
-    const j = dx < 0 ? Math.min(n - 1, CUR + 1) : Math.max(0, CUR - 1);
+    const pos = ORDER.indexOf(CUR), j = ORDER[dx < 0 ? Math.min(n - 1, pos + 1) : Math.max(0, pos - 1)];
     if (j !== CUR){ showRow(j); window.scrollTo(0, 0); }
   }, { passive: true });
 })();
