@@ -85,6 +85,11 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
   #view{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto}
   #view .ca{grid-row:auto}
 }
+.desc{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0 0 12px;font-size:13px}
+.desc dt{color:var(--muted);white-space:nowrap}
+.desc dd{margin:0;color:var(--ink);word-break:keep-all}
+.dsum{margin:0;padding:12px 0 0 18px;border-top:1px solid var(--grid);display:grid;gap:8px;font-size:13.5px;line-height:1.6;color:var(--ink);word-break:keep-all}
+.dsum li::marker{color:var(--muted)}
 .cinfo{font-size:12px;color:var(--ink2);min-height:18px;margin:-4px 0 6px;line-height:1.5}
 .cinfo b{font-weight:650;color:var(--ink)}
 .cinfo .cdate{font-size:13px}
@@ -541,6 +546,19 @@ document.addEventListener("click", e => {
   SUP_MODE = b.dataset.sup; store.set("sp_sup", SUP_MODE);
   const y = window.scrollY; showRow(CUR, false); window.scrollTo(0, y);
 });
+/* 기업 개요: 업종(WICS·KRX), 주요제품, 상장 정보, FnGuide 기업개요 */
+function descCard(k, i){
+  const code = DATA.codes && DATA.codes[k] ? DATA.codes[k][i] : null;
+  const v = code && DATA.desc ? DATA.desc[code] : null;
+  if (!v) return "";
+  const kv = [["업종", [v.wics, v.industry].filter(Boolean).join(" · ")], ["주요제품", v.products],
+              ["시장 · 상장일", [v.market, v.listed].filter(Boolean).join(" · ")]].filter(([, b]) => b);
+  const sum = (v.summary || []).map(s => `<li>${esc(s)}</li>`).join("");
+  return `<div class="card"><h2>기업 개요 <small class="tn">${esc(code)}</small></h2>
+    ${kv.length ? `<dl class="desc">${kv.map(([a, b]) => `<dt>${a}</dt><dd>${esc(b)}</dd>`).join("")}</dl>` : ""}
+    ${sum ? `<ul class="dsum">${sum}</ul>` : ""}
+    <div class="note">출처: KRX 상장정보, FnGuide 기업개요(네이버 증권). 웹 갱신 때 함께 바뀝니다.</div></div>`;
+}
 function allCard(k, i){
   const s = sheet(k), row = s.rows[i];
   const body = s.cols.map((c, j) => `<tr><td>${esc(c)}</td><td>${colored(c, row[j])}</td></tr>`).join("");
@@ -585,7 +603,7 @@ function showRow(i, smooth = true){
   const r = rowObj(TAB, i);
   $("view").innerHTML = `<div class="col ca">${heroCard(r, TAB) + (TAB === "buy" ? holdCard(r) : "") + volCard(r, TAB)}</div>`
     + `<div class="col cb">${chartCard(r, TAB, i) + lineCard(r)}</div>`
-    + `<div class="col cc">${supplyCard(r) + allCard(TAB, i)}</div>`;
+    + `<div class="col cc">${supplyCard(r) + descCard(TAB, i) + allCard(TAB, i)}</div>`;
   fitBandLabels();
   drawChart();
 }
