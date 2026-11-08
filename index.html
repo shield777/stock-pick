@@ -98,7 +98,8 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .prow.vrow2{grid-template-columns:1fr auto;min-height:42px}
 
 /* 보유 */
-.hold{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 10px}
+.hold{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px 6px}   /* 머리 카드와 같은 5칸 틀, 왼쪽부터 */
+.hold .wide{grid-column:span 2}
 .hold .pl{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px;border-radius:12px;background:var(--wash)}
 .hold .pl span{font-size:12px;color:var(--ink2)}
 .hold .pl b{font-size:22px;font-weight:700;letter-spacing:-.03em}
@@ -325,7 +326,7 @@ function holdCard(r){
       <div class="pl"><span>평가손익</span><div><b class="${cls(r["평가손익"])}">${fSignedInt(r["평가손익"])}</b><i class="${cls(r["매수가대비"])}">${fPct(r["매수가대비"])}%</i></div></div>
       <div class="tile"><span>매수가</span><b>${fInt(r["매수가"])}</b></div>
       <div class="tile"><span>보유수량</span><b>${fInt(r["보유수량"])}</b></div>
-      <div class="tile"><span>매수금액</span><b>${fInt(r["매수금액"])}</b></div>
+      <div class="tile wide"><span>매수금액</span><b>${fInt(r["매수금액"])}</b></div>
     </div></div>`;
 }
 /* 거래량 · 회전율 카드 (매수종목 탭은 거래량 자료가 없어 회전율만) */
