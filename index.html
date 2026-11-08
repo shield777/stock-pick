@@ -697,14 +697,19 @@ window.addEventListener("scroll", () => { const c = $("chipbar"); c.classList.to
 })();
 /* ── 2개월이내 필터: 엑셀 값으로 판단, 여러 개 고르면 모두 만족하는 종목만 ── */
 const N = v => isNum(v) ? v : NaN;
-/* 최근 days거래일 안에 5일선이 20일선을 아래→위로 넘었고, 지금도 위에 있는지 (차트용 일봉의 이평 값 사용) */
-function goldenCross(i, days){
+/* 5-20 돌파: 돌파 직전(임박) 또는 막 돌파한 종목. 차트용 일봉의 5일·20일 이평 값 사용
+   - 임박: 5일선이 아직 20일선 아래(같음 포함), 차이가 20일선의 5% 이내, 3거래일 전보다 차이가 줄어듦
+   - 막 돌파: 최근 3거래일 안에 5일선이 20일선을 아래→위로 넘었고 지금도 위 */
+const CROSS_GAP = 5, CROSS_NARROW = 3, CROSS_RECENT = 3;
+function crossSoon(i){
   const code = DATA.codes && DATA.codes[TAB] ? DATA.codes[TAB][i] : null;
   const d = code && DATA.ohlc ? DATA.ohlc[code] : null;
-  if (!d || d.length < 2) return false;
-  const n = d.length, ok = z => isNum(z[6]) && isNum(z[7]);
-  if (!ok(d[n - 1]) || !(d[n - 1][6] > d[n - 1][7])) return false;
-  for (let t = Math.max(1, n - days); t < n; t++)
+  if (!d || d.length < CROSS_NARROW + 1) return false;
+  const n = d.length, ok = z => isNum(z[6]) && isNum(z[7]) && z[7] > 0, gap = z => (z[7] - z[6]) / z[7] * 100;
+  const last = d[n - 1], prev = d[n - 1 - CROSS_NARROW];
+  if (!ok(last)) return false;
+  if (last[6] <= last[7]) return gap(last) <= CROSS_GAP && ok(prev) && gap(last) < gap(prev);
+  for (let t = Math.max(1, n - CROSS_RECENT); t < n; t++)
     if (ok(d[t - 1]) && ok(d[t]) && d[t - 1][6] <= d[t - 1][7] && d[t][6] > d[t][7]) return true;
   return false;
 }
@@ -714,7 +719,7 @@ const FILTERS = [
   ["이동평균", "ma20u", "20일선 위",   r => N(r["현재가"]) > N(r["20일선"]),  "ma20d"],
   ["이동평균", "ma20d", "20일선 아래", r => N(r["현재가"]) < N(r["20일선"]),  "ma20u"],
   ["이동평균", "align", "정배열(5일>20일)", r => N(r["5일선"]) > N(r["20일선"]), ""],
-  ["이동평균", "gx5",   "5일선이 20일선 돌파(최근 5거래일)", (r, i) => goldenCross(i, 5), ""],
+  ["이동평균", "gx5",   "5-20 돌파", (r, i) => crossSoon(i), ""],
   ["볼린저",   "bbu",   "상단 위",     r => N(r["현재가"]) > N(r["볼린저up"]), "bbn bbd"],
   ["볼린저",   "bbn",   "하단 위 3% 이내", r => N(r["현재가"]) >= N(r["볼린저lo"]) && N(r["현재가"]) <= N(r["볼린저lo"]) * 1.03, "bbu"],
   ["볼린저",   "bbd",   "하단 아래",   r => N(r["현재가"]) < N(r["볼린저lo"]), "bbu"],
