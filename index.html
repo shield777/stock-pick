@@ -614,7 +614,7 @@ function render(){
   ORDER = s.rows.map((_, i) => i);
   if (TAB === "recent"){ const ci = s.cols.indexOf("등록일자");
     ORDER.sort((a, b) => String(s.rows[b][ci]).localeCompare(String(s.rows[a][ci])) || a - b); }
-  if (filterOn()) ORDER = ORDER.filter(i => passes(rowObj(TAB, i)));
+  if (filterOn()) ORDER = ORDER.filter(i => passes(rowObj(TAB, i), i));
   updateFilterBtn(ORDER.length, n);
   if (!ORDER.length){
     chips.innerHTML = `<span class="fcount">조건에 맞는 종목이 없습니다</span>`;
@@ -697,12 +697,24 @@ window.addEventListener("scroll", () => { const c = $("chipbar"); c.classList.to
 })();
 /* ── 2개월이내 필터: 엑셀 값으로 판단, 여러 개 고르면 모두 만족하는 종목만 ── */
 const N = v => isNum(v) ? v : NaN;
+/* 최근 days거래일 안에 5일선이 20일선을 아래→위로 넘었고, 지금도 위에 있는지 (차트용 일봉의 이평 값 사용) */
+function goldenCross(i, days){
+  const code = DATA.codes && DATA.codes[TAB] ? DATA.codes[TAB][i] : null;
+  const d = code && DATA.ohlc ? DATA.ohlc[code] : null;
+  if (!d || d.length < 2) return false;
+  const n = d.length, ok = z => isNum(z[6]) && isNum(z[7]);
+  if (!ok(d[n - 1]) || !(d[n - 1][6] > d[n - 1][7])) return false;
+  for (let t = Math.max(1, n - days); t < n; t++)
+    if (ok(d[t - 1]) && ok(d[t]) && d[t - 1][6] <= d[t - 1][7] && d[t][6] > d[t][7]) return true;
+  return false;
+}
 const FILTERS = [
   ["이동평균", "ma5u",  "5일선 위",    r => N(r["현재가"]) > N(r["5일선"]),   "ma5d"],
   ["이동평균", "ma5d",  "5일선 아래",  r => N(r["현재가"]) < N(r["5일선"]),   "ma5u"],
   ["이동평균", "ma20u", "20일선 위",   r => N(r["현재가"]) > N(r["20일선"]),  "ma20d"],
   ["이동평균", "ma20d", "20일선 아래", r => N(r["현재가"]) < N(r["20일선"]),  "ma20u"],
   ["이동평균", "align", "정배열(5일>20일)", r => N(r["5일선"]) > N(r["20일선"]), ""],
+  ["이동평균", "gx5",   "5일선이 20일선 돌파(최근 5거래일)", (r, i) => goldenCross(i, 5), ""],
   ["볼린저",   "bbu",   "상단 위",     r => N(r["현재가"]) > N(r["볼린저up"]), "bbn bbd"],
   ["볼린저",   "bbn",   "하단 위 3% 이내", r => N(r["현재가"]) >= N(r["볼린저lo"]) && N(r["현재가"]) <= N(r["볼린저lo"]) * 1.03, "bbu"],
   ["볼린저",   "bbd",   "하단 아래",   r => N(r["현재가"]) < N(r["볼린저lo"]), "bbu"],
@@ -717,12 +729,12 @@ const FILTERS = [
 ];
 let FSEL = new Set((store.get("sp_filter") || "").split(",").filter(id => FILTERS.some(f => f[1] === id)));
 const filterOn = () => TAB === "recent" && FSEL.size > 0;
-const ftest = (id, r) => { const f = FILTERS.find(x => x[1] === id); return !!f && f[3](r); };
+const ftest = (id, r, i) => { const f = FILTERS.find(x => x[1] === id); return !!f && f[3](r, i); };
 /* 여러 조건은 모두 만족(그리고). 단, '하단 위 3% 이내'와 '하단 아래'를 같이 켜면 둘 중 하나만 맞아도 보임(또는) */
-const passes = r => {
+const passes = (r, i) => {
   const ids = [...FSEL], lowPair = ids.includes("bbn") && ids.includes("bbd");
-  return ids.filter(id => !(lowPair && (id === "bbn" || id === "bbd"))).every(id => ftest(id, r))
-    && (!lowPair || ftest("bbn", r) || ftest("bbd", r));
+  return ids.filter(id => !(lowPair && (id === "bbn" || id === "bbd"))).every(id => ftest(id, r, i))
+    && (!lowPair || ftest("bbn", r, i) || ftest("bbd", r, i));
 };
 function drawFilterPanel(){
   const groups = [...new Set(FILTERS.map(f => f[0]))];
