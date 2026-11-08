@@ -74,7 +74,7 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .fbtn.on{background:var(--ink);color:var(--page);box-shadow:none}
 .fbtn b{display:inline-block;min-width:18px;margin-left:4px;padding:0 5px;border-radius:999px;background:var(--page);color:var(--ink);font-size:11px;line-height:18px}
 .fbtn + .chips{padding-left:8px;scroll-padding-left:8px}
-.fpanel{padding:4px 16px 12px;display:grid;gap:10px;border-top:1px solid var(--grid)}
+.fpanel{padding:2px 0 4px;display:grid;gap:10px}   /* 고정 막대 밖: 화면을 내리면 같이 올라감 */
 .fgrp{display:grid;grid-template-columns:76px 1fr;gap:8px;align-items:start}
 .fgrp > span{font-size:12px;color:var(--muted);padding-top:7px}
 .fgrp > div{display:flex;flex-wrap:wrap;gap:6px}
@@ -273,8 +273,8 @@ details[open] summary::after{content:"접기"}
       <button type="button" class="fbtn" id="fbtn" aria-expanded="false" hidden>필터</button>
       <div class="chips" id="chips" role="tablist" aria-label="종목 선택 (옆으로 밀어서 보기)"></div>
     </div>
-    <div class="fpanel" id="fpanel" hidden></div>
   </div>
+  <div class="fpanel" id="fpanel" hidden></div>
   <div id="view" class="stack"></div>
   <div class="card" id="errCard" hidden>
     <details><summary id="errSum"></summary><ul class="errs" id="errList"></ul></details>
@@ -756,7 +756,11 @@ function updateFilterBtn(shown, total){   // 필터를 쓰면 버튼에 "남은 
 $("fbtn").addEventListener("click", () => {
   const p = $("fpanel"); p.hidden = !p.hidden;
   $("fbtn").setAttribute("aria-expanded", !p.hidden);
-  if (!p.hidden) drawFilterPanel();
+  if (!p.hidden){
+    drawFilterPanel();
+    const top = p.getBoundingClientRect().top + window.scrollY - $("chipbar").offsetHeight - 8;   // 내려가 있으면 조건 목록이 보이게 올림
+    if (window.scrollY > top) window.scrollTo({ top, behavior: "smooth" });
+  }
 });
 $("fpanel").addEventListener("click", e => {
   const c = e.target.closest(".fchip");
