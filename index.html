@@ -73,7 +73,7 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
   padding:8px 16px;scroll-padding:0 16px;scrollbar-width:none}
 /* 종목 목록 좌우 버튼: 마우스를 쓰는 PC에서만 보임 */
 .cnav{display:none}
-@media (hover:hover) and (pointer:fine){
+@media (any-pointer:fine){
   .chipbar{padding:0 10px}
   .chips{padding:8px 6px;scroll-padding:0 6px}
   .cnav{display:block;flex:none;width:34px;height:34px;border:0;border-radius:50%;background:var(--surface);box-shadow:0 0 0 1px var(--ring);
@@ -84,12 +84,17 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 }
 /* 종목 카드 묶음: 휴대폰은 한 줄로 쌓고, 넓은 화면은 두 칸 */
 .col{display:contents}
-@media (min-width:768px){
+@media (min-width:768px){            /* 아이패드·작은 PC: 두 칸 (왼쪽 = 종목 정보, 오른쪽 = 차트 → 수급) */
   .wrap{max-width:1080px}
   .tabs{max-width:420px}
-  #view{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+  #view{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto 1fr;align-items:start}
   #view .col{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0}
-  #view .full{grid-column:1/-1}
+  #view .ca{grid-row:span 2}
+}
+@media (min-width:1280px){           /* 넓은 PC: 세 칸 */
+  .wrap{max-width:1560px}
+  #view{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto}
+  #view .ca{grid-row:auto}
 }
 .cinfo{font-size:12px;color:var(--ink2);min-height:18px;margin:-4px 0 6px;line-height:1.5}
 .cinfo b{font-weight:650;color:var(--ink)}
@@ -592,8 +597,9 @@ function showRow(i, smooth = true){
     chips.scrollTo({ left: Math.max(0, left), behavior: smooth ? "smooth" : "auto" });
   }
   const r = rowObj(TAB, i);
-  $("view").innerHTML = `<div class="col">${heroCard(r, TAB) + (TAB === "buy" ? holdCard(r) : "") + volCard(r, TAB)}</div>`
-    + `<div class="col">${chartCard(r, TAB, i) + lineCard(r) + supplyCard(r)}</div>` + `<div class="full">${allCard(TAB, i)}</div>`;
+  $("view").innerHTML = `<div class="col ca">${heroCard(r, TAB) + (TAB === "buy" ? holdCard(r) : "") + volCard(r, TAB)}</div>`
+    + `<div class="col cb">${chartCard(r, TAB, i) + lineCard(r)}</div>`
+    + `<div class="col cc">${supplyCard(r) + allCard(TAB, i)}</div>`;
   fitBandLabels();
   drawChart();
 }
