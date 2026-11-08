@@ -111,6 +111,9 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .pick[aria-selected="true"] span{color:var(--page);opacity:.7}
 
 /* 종목 머리 */
+.name-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.nlink{flex:none;font-size:12px;font-weight:600;color:var(--ink2);text-decoration:none;padding:6px 11px;border-radius:999px;background:var(--wash);white-space:nowrap}
+.nlink:hover{color:var(--ink);background:var(--grid)}
 .hero .name{font-size:22px;font-weight:700;letter-spacing:-.03em;line-height:1.25}
 .hero .reg{font-size:12px;color:var(--muted);margin-top:2px}
 .hero-row{display:flex;align-items:flex-end;justify-content:space-between;gap:8px 12px;margin-top:12px;flex-wrap:wrap}
@@ -328,7 +331,7 @@ function optLabel(k, i){
 
 /* ── 그리기 ── */
 const pctTxt = v => fPct(v) + (isNum(v) && v !== 0 ? "%" : "");   // 0 은 엑셀처럼 "-"
-function heroCard(r, k){
+function heroCard(r, k, i){
   const pctEm = (p, d) => { const ds = fShortDate(d);
     const ps = isNum(p) ? `<i class="${cls(p)}">${p === 0 ? "0.00" : fPct(p)}%</i>` : "";
     return ps + (ps && ds ? "<br>" : "") + ds; };
@@ -348,7 +351,10 @@ function heroCard(r, k){
   const tile = ([a, b, c]) => `<div class="tile"><span>${a}</span><b>${b}</b>${c ? `<em>${c}</em>` : ""}</div>`;
   const days = ["D-3","D-2","D-1","D"].map(d => `<div><span>${d}</span><b class="${cls(r[d])}">${pctTxt(r[d])}</b></div>`).join("");
   return `<div class="card hero">
-    <div class="name">${esc(r["종목명"])}</div>
+    <div class="name-row"><div class="name">${esc(r["종목명"])}</div>${(() => {   // 네이버 증권 종목 화면 (새 창)
+      const code = DATA.codes && DATA.codes[k] ? DATA.codes[k][i] : null;
+      return code ? `<a class="nlink" href="https://m.stock.naver.com/domestic/stock/${encodeURIComponent(code)}/total" target="_blank" rel="noopener">네이버 증권 ↗</a>` : "";
+    })()}</div>
     <div class="reg tn">등록일자 ${fDate(r["등록일자"])}</div>
     <div class="hero-row">
       <div class="price tn">${fInt(r["현재가"])}<small>원</small></div>
@@ -601,7 +607,7 @@ function showRow(i, smooth = true){
     chips.scrollTo({ left: Math.max(0, left), behavior: smooth ? "smooth" : "auto" });
   }
   const r = rowObj(TAB, i);
-  $("view").innerHTML = `<div class="col ca">${heroCard(r, TAB) + (TAB === "buy" ? holdCard(r) : "") + volCard(r, TAB)}</div>`
+  $("view").innerHTML = `<div class="col ca">${heroCard(r, TAB, i) + (TAB === "buy" ? holdCard(r) : "") + volCard(r, TAB)}</div>`
     + `<div class="col cb">${chartCard(r, TAB, i) + lineCard(r)}</div>`
     + `<div class="col cc">${supplyCard(r) + descCard(TAB, i) + allCard(TAB, i)}</div>`;
   fitBandLabels();
