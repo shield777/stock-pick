@@ -68,7 +68,9 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 
 /* 종목 선택 */
 .chips{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
-  margin:0 -16px;padding:2px 16px 6px;scroll-padding:0 16px;scrollbar-width:none}
+  margin:0 -16px;padding:8px 16px 8px;scroll-padding:0 16px;scrollbar-width:none;
+  position:sticky;top:0;z-index:5;background:var(--page)}   /* 화면을 내려도 위에 고정 */
+.chips.stuck{box-shadow:0 1px 0 var(--grid),0 6px 12px -8px rgba(0,0,0,.18)}
 .chips::-webkit-scrollbar{display:none}
 .pick{flex:none;scroll-snap-align:start;border:0;background:var(--surface);box-shadow:0 0 0 1px var(--ring);border-radius:12px;
   padding:8px 13px 7px;text-align:left;cursor:pointer;line-height:1.25}
@@ -499,7 +501,14 @@ function start(data){
 
 /* ── 이벤트 ── */
 document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => { TAB = b.dataset.tab; store.set(KEY_TAB, TAB); render(); window.scrollTo(0, 0); }));
-$("chips").addEventListener("click", e => { const b = e.target.closest(".pick"); if (b) showRow(+b.dataset.i); });
+$("chips").addEventListener("click", e => {
+  const b = e.target.closest(".pick"); if (!b) return;
+  showRow(+b.dataset.i);
+  const top = $("view").getBoundingClientRect().top + window.scrollY - $("chips").offsetHeight - 8;   // 내려가 있으면 새 종목의 맨 위로
+  if (window.scrollY > top) window.scrollTo(0, top);
+});
+/* 고정된 상태일 때만 아래 그림자 */
+window.addEventListener("scroll", () => { const c = $("chips"); c.classList.toggle("stuck", c.getBoundingClientRect().top <= 0.5 && window.scrollY > 0); }, { passive: true });
 /* 종목 카드 영역을 옆으로 밀어도 이전/다음 종목으로 */
 (() => {
   let sx = 0, sy = 0, on = false;
