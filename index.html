@@ -143,6 +143,11 @@ h2 small{font-size:11px;font-weight:500;color:var(--muted)}
 .live .lsub{flex-basis:100%;font-size:11.5px;color:var(--ink2);line-height:1.5}
 .live.off .ll{color:var(--muted)} .live.off .ll::before{animation:none}
 .band .ldot{position:absolute;top:6px;width:8px;height:8px;margin-left:-6px;border-radius:50%;background:transparent;border:2px solid var(--up);box-shadow:0 0 0 1.5px var(--surface)}
+.band .bl.lv b{color:var(--up)}
+.lvsw{display:inline-block;width:6px;height:6px;border-radius:50%;border:2px solid var(--up);margin-right:4px;vertical-align:0}
+.prow.lv .lb{color:var(--up);font-weight:700}
+.prow .pc em.lv{font-size:11px;font-weight:600;color:var(--ink2)}
+.prow .pc em.lv.up{color:var(--up)} .prow .pc em.lv.dn{color:var(--dn)}
 .price{font-size:clamp(34px,10vw,42px);font-weight:700;letter-spacing:-.04em;line-height:1}
 .price small{font-size:15px;font-weight:600;color:var(--muted);margin-left:2px;letter-spacing:0}
 .wk{display:grid;justify-items:end;gap:2px}
@@ -425,10 +430,11 @@ function volCard(r, k){
 }
 /* 가격 한 줄: [이름, 보조설명, 가격, %값, %설명, 종류] */
 function priceRows(items){
-  return items.map(([lb, sub, v, pct, pcap, kind]) => `<div class="prow ${kind || ""}">
+  return items.map(([lb, sub, v, pct, pcap, kind, lpct]) => `<div class="prow ${kind || ""}">
       <div class="lb">${lb}${sub ? `<em class="tn">${esc(sub)}</em>` : ""}</div>
       <div class="pv tn">${fInt(v)}</div>
-      <div class="pc tn">${pct === undefined ? "" : `<b class="${cls(pct)}">${pct === 0 ? "0.00" : fPct(pct)}${isNum(pct) ? "%" : ""}</b>${pcap ? `<em>${pcap}</em>` : ""}`}</div>
+      <div class="pc tn">${pct === undefined ? "" : `<b class="${cls(pct)}">${pct === 0 ? "0.00" : fPct(pct)}${isNum(pct) ? "%" : ""}</b>${pcap ? `<em>${pcap}</em>` : ""}`}${
+        lpct === undefined ? "" : `<em class="lv ${cls(lpct)}">실시간 ${lpct === 0 ? "0.00" : fPct(lpct)}%</em>`}</div>
     </div>`).join("");
 }
 /* 최근 30거래일 주가 차트 (일봉 + 거래량). 자료: 웹 갱신 때 네이버 일봉을 함께 받아 암호화해 둔 것 */
@@ -443,19 +449,23 @@ function chartCard(r, k, i){
 }
 function drawChart(){
   const box = $("cbox"); if (!box) return;
-  const d = DATA.ohlc[box.dataset.code], n = d.length;
+  const d = DATA.ohlc[box.dataset.code];
+  const lv = liveItem(), extra = liveBar(d, lv);
+  const bars = extra ? d.concat([extra]) : d, n = bars.length, nd = d.length;
+  LIVE.drawn = box.dataset.code + ":" + (lv ? [lv.price, lv.high, lv.low].join("/") : "");   // 같은 값이면 다시 그리지 않음
   const W = Math.max(240, box.clientWidth), H = 220, padR = 50, plotW = W - padR;
   const pT = 10, pH = 142, vT = 166, vH = 46;
   const MAS = [[6, 5, "--l5"], [7, 20, "--l20"], [8, 60, "--l60"], [9, 120, "--l120"]];   // [열, 일수, 색]
-  const maVals = d.flatMap(z => MAS.map(([k]) => z[k])).filter(v => isNum(v));
-  let lo = Math.min(...d.map(x => x[3]), ...maVals), hi = Math.max(...d.map(x => x[2]), ...maVals);
+  const maVals = bars.flatMap(z => MAS.map(([k]) => z[k])).filter(v => isNum(v));
+  let lo = Math.min(...bars.map(x => x[3]), ...maVals), hi = Math.max(...bars.map(x => x[2]), ...maVals);
+  if (lv) { lo = Math.min(lo, lv.price); hi = Math.max(hi, lv.price); }
   const base = +box.dataset.base, span0 = hi - lo || hi * 0.05;
   const baseIn = base > 0 && base >= lo - span0 * 0.15 && base <= hi + span0 * 0.15;   // 너무 멀면 차트를 찌그러뜨리지 않게 빼고 글로 표시
   if (baseIn){ lo = Math.min(lo, base); hi = Math.max(hi, base); }
   const pad = (hi - lo) * 0.05 || 1; lo -= pad; hi += pad;
   const y = v => pT + (hi - v) / (hi - lo) * pH;
   const step = plotW / n, cw = Math.max(2, Math.min(12, step * 0.62)), x = j => step * (j + 0.5);
-  const vmax = Math.max(...d.map(z => z[5])) || 1;
+  const vmax = Math.max(...bars.map(z => z[5])) || 1;
   const col = z => z[4] > z[1] ? "var(--up)" : z[4] < z[1] ? "var(--dn)" : "var(--ink2)";
   let s = "";
   [hi - pad, (hi + lo) / 2, lo + pad].forEach(v => {   // 가로 눈금 3줄
@@ -463,37 +473,44 @@ function drawChart(){
        + `<text x="${plotW + 6}" y="${y(v) + 4}" class="ax">${fInt(Math.round(v))}</text>`;
   });
   s += `<line x1="0" x2="${plotW}" y1="${vT + vH}" y2="${vT + vH}" stroke="var(--grid)"/>`;
-  const ri = d.findIndex(z => z[0] === box.dataset.reg);
+  const ri = bars.findIndex(z => z[0] === box.dataset.reg);
   if (ri >= 0) s += `<line x1="${x(ri)}" x2="${x(ri)}" y1="${pT}" y2="${vT + vH}" stroke="var(--axis)" stroke-dasharray="2 3"/>`
      + `<text x="${Math.min(plotW - 24, x(ri) + 3)}" y="${pT + pH - 3}" class="ax bs">등록</text>`;
   if (baseIn) s += `<line x1="0" x2="${plotW}" y1="${y(base)}" y2="${y(base)}" stroke="var(--ink2)" stroke-dasharray="4 3" opacity=".7"/>`
      + `<text x="4" y="${y(base) - 4}" class="ax bs">기준가 ${fInt(base)}</text>`;   // 기준가 글자는 차트 안 왼쪽 (오른쪽 눈금과 겹치지 않게)
-  d.forEach((z, j) => {
-    const c = col(z), xx = x(j);
-    s += `<line x1="${xx}" x2="${xx}" y1="${y(z[2])}" y2="${y(z[3])}" stroke="${c}" stroke-width="1"/>`;
+  bars.forEach((z, j) => {
+    const c = col(z), xx = x(j), live = !!z[10];
+    s += `<line x1="${xx}" x2="${xx}" y1="${y(z[2])}" y2="${y(z[3])}" stroke="${c}" stroke-width="1"${live ? ' stroke-dasharray="2 2"' : ""}/>`;
     const top = y(Math.max(z[1], z[4])), h = Math.max(1, Math.abs(y(z[1]) - y(z[4])));
-    s += `<rect x="${xx - cw / 2}" y="${top}" width="${cw}" height="${h}" fill="${c}" rx="1"/>`;
+    s += `<rect x="${xx - cw / 2}" y="${top}" width="${cw}" height="${h}" fill="${c}" rx="1"${live ? ` fill-opacity=".35" stroke="${c}" stroke-dasharray="2 2"` : ""}/>`;
     const vh = z[5] / vmax * vH;
-    s += `<rect x="${xx - cw / 2}" y="${vT + vH - vh}" width="${cw}" height="${vh}" fill="${c}" opacity=".35"/>`;
+    s += `<rect x="${xx - cw / 2}" y="${vT + vH - vh}" width="${cw}" height="${vh}" fill="${c}" opacity="${live ? .2 : .35}"/>`;
+    if (live) s += `<text x="${xx + cw / 2}" y="${Math.max(pT + 9, y(z[2]) - 5)}" class="ax bs" text-anchor="end">오늘</text>`;
   });
   MAS.forEach(([k, , c]) => {
-    const pts = d.map((z, j) => isNum(z[k]) ? `${x(j).toFixed(1)},${y(z[k]).toFixed(1)}` : null).filter(Boolean);
+    const pts = bars.map((z, j) => isNum(z[k]) ? `${x(j).toFixed(1)},${y(z[k]).toFixed(1)}` : null).filter(Boolean);
     if (pts.length > 1) s += `<polyline points="${pts.join(" ")}" fill="none" stroke="var(${c})" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>`;
   });
+  if (lv){   // 실시간 가격선 (마지막 종가보다 위면 빨강, 아래면 파랑)
+    const c = lv.price > d[nd - 1][4] ? "var(--up)" : lv.price < d[nd - 1][4] ? "var(--dn)" : "var(--ink2)";
+    s += `<line x1="0" x2="${plotW}" y1="${y(lv.price)}" y2="${y(lv.price)}" stroke="${c}" stroke-dasharray="3 3" stroke-width="1.2"/>`
+       + `<text x="4" y="${y(lv.price) + 12}" class="ax bs" style="fill:${c}">실시간 ${fInt(lv.price)}</text>`;
+  }
   s += `<line id="cx" x1="0" x2="0" y1="${pT}" y2="${vT + vH}" stroke="var(--ink)" stroke-width="1" opacity="0"/>`
      + `<rect id="chit" x="0" y="0" width="${W}" height="${H}" fill="transparent"/>`;
-  box.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 ${n}거래일 일봉과 거래량">${s}</svg>`
+  box.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 ${nd}거래일 일봉과 거래량">${s}</svg>`
     + (base > 0 && !baseIn ? `<div class="note" style="margin-top:2px">기준가 ${fInt(base)}원은 차트 범위 ${base > hi ? "위" : "아래"}에 있습니다.</div>` : "");
   const show = (j, picked) => {
-    const z = d[j], p = j > 0 ? d[j - 1][4] : null, chg = p ? Math.round((z[4] / p * 100 - 100) * 100) / 100 : null;
-    const line = withChg => `시 ${fInt(z[1])} · 고 ${fInt(z[2])} · 저 ${fInt(z[3])} · 종 <b class="${cls(chg)}">${fInt(z[4])}</b>`
+    const z = bars[j], p = j > 0 ? bars[j - 1][4] : null, chg = p ? r2(z[4] / p * 100 - 100) : null, live = !!z[10];
+    const line = withChg => `시 ${fInt(z[1])} · 고 ${fInt(z[2])} · 저 ${fInt(z[3])} · ${live ? "현재" : "종"} <b class="${cls(chg)}">${fInt(z[4])}</b>`
       + (withChg && chg !== null ? ` <span class="${cls(chg)}">(${pctTxt(chg)})</span>` : "") + ` · 거래량 ${fInt(z[5])}`;
-    $("cinfo").innerHTML = `<div class="cdate"><b>${fShortDate(z[0])}</b></div><div class="cline" id="cline">${line(true)}</div>`
+    $("cinfo").innerHTML = `<div class="cdate"><b>${live ? "오늘 (실시간 " + kstTime(LIVE.at) + ")" : fShortDate(z[0])}</b></div><div class="cline" id="cline">${line(true)}</div>`
       + `<div class="cma">${MAS.map(([k, n2, c]) => `<span><i style="background:var(${c})"></i>${n2}일 <b>${isNum(z[k]) ? fInt(z[k]) : "—"}</b></span>`).join("")}</div>`;
     const cl = $("cline");   // 한 줄에 안 들어가면 등락률을 빼고, 그래도 넘치면 글자를 조금 줄임
     if (cl.scrollWidth > cl.clientWidth) cl.innerHTML = line(false);
     if (cl.scrollWidth > cl.clientWidth) cl.classList.add("sm");
     const l = $("cx"); l.setAttribute("x1", x(j)); l.setAttribute("x2", x(j)); l.setAttribute("opacity", picked ? .35 : 0);
+    box.dataset.sel = picked ? j : "";
   };
   const pick = e => { const rc = box.querySelector("svg").getBoundingClientRect();
     show(Math.max(0, Math.min(n - 1, Math.floor((e.clientX - rc.left) / step))), true); };
@@ -501,9 +518,30 @@ function drawChart(){
   hit.addEventListener("pointermove", pick);
   hit.addEventListener("pointerdown", pick);
   hit.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") show(n - 1, false); });
-  show(n - 1, false);
+  const sel = parseInt(box.dataset.sel, 10);   // 실시간 갱신으로 다시 그려도 보고 있던 날 유지
+  if (sel >= 0 && sel < n) show(sel, true); else show(n - 1, false);
 }
 window.addEventListener("resize", () => { clearTimeout(window._crt); window._crt = setTimeout(drawChart, 150); });
+/* 실시간 도우미: 지금 종목의 실시간 시세, 한국 날짜, 오늘 봉 */
+const r2 = v => Math.round(v * 100) / 100;
+function liveItem(){
+  const code = DATA && DATA.codes && DATA.codes[TAB] ? DATA.codes[TAB][CUR] : null;
+  const it = code ? LIVE.items[code] : null;
+  return it && isNum(it.price) && it.price > 0 ? it : null;
+}
+function kstDate(){
+  const p = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  return p.replace(/-/g, "");
+}
+/* 오늘 봉: 평일 09시 이후이고 차트 마지막 날이 오늘보다 앞이면 실시간 시·고·저·현재가로 봉 하나 추가 (5·20일선은 종가 29·19개 + 실시간으로 계산) */
+function liveBar(d, lv){
+  if (!lv || !isNum(lv.open) || !(lv.open > 0) || !isNum(lv.high) || !(lv.high > 0) || !isNum(lv.low) || !(lv.low > 0)) return null;
+  const k = kstNow(); if (["Sat", "Sun"].includes(k.wd) || k.hm < 9 * 60) return null;
+  const today = kstDate(); if (!d.length || d[d.length - 1][0] >= today) return null;
+  const closes = d.map(z => z[4]);
+  const ma = n => closes.length >= n - 1 ? Math.round((closes.slice(-(n - 1)).reduce((s, v) => s + v, 0) + lv.price) / n) : null;
+  return [today, lv.open, Math.max(lv.high, lv.price), Math.min(lv.low, lv.price), lv.price, lv.vol ?? 0, ma(5), ma(20), null, null, true];
+}
 function lineCard(r){
   const cur = r["현재가"], m5 = r["5일선"], m20 = r["20일선"], up = r["볼린저up"], lo = r["볼린저lo"];
   const ok = v => isNum(v) && v !== 0;
@@ -511,26 +549,32 @@ function lineCard(r){
     ["현재가", "", cur, undefined, "", "now"],
     ["5일선", "", m5, r["5일선대비"], "현재가 위치", "m5"],
     ["20일선", "", m20, r["20일선대비"], "현재가 위치", "m20"],
-    ["볼린저 상단", "", up, r["볼린저up_대비"], "현재가 대비"],
-    ["볼린저 하단", "", lo, r["볼린저lo_대비"], "현재가 대비"],
+    ["볼린저 상단", "", up, r["볼린저up_대비"], "현재가 대비", "bbu"],
+    ["볼린저 하단", "", lo, r["볼린저lo_대비"], "현재가 대비", "bbl"],
   ].filter(it => ok(it[2]));
   if (!ok(cur) || items.length < 2) return "";
-  return `<div class="card"><h2>이동평균선 · 볼린저 밴드</h2>${bandChart(cur, m5, m20, up, lo)}
+  const lv = liveItem(), lvp = lv ? lv.price : null;
+  if (lv){   // 실시간 줄 + 각 줄에 '실시간 기준' % (같은 식을 실시간 가격으로)
+    items.forEach(it => {
+      if (it[5] === "m5" || it[5] === "m20") it[6] = r2(lvp / it[2] * 100 - 100);
+      else if (it[5] === "bbu" || it[5] === "bbl") it[6] = r2(it[2] / lvp * 100 - 100);
+    });
+    items.unshift(["실시간", kstTime(LIVE.at), lvp, r2(lvp / cur * 100 - 100), "엑셀 현재가 대비", "lv"]);
+  }
+  return `<div class="card" id="bandcard"><h2>이동평균선 · 볼린저 밴드</h2>${bandChart(cur, m5, m20, up, lo, lvp)}
     <div class="plist">${priceRows(items)}</div>
-    <div class="note">%는 엑셀 값 그대로입니다. 이평선은 현재가가 선보다 몇 % 위(+)·아래(−)인지, 볼린저는 밴드가 현재가보다 몇 % 위(+)·아래(−)인지입니다.</div></div>`;
+    <div class="note">%는 엑셀 값 그대로입니다. 이평선은 현재가가 선보다 몇 % 위(+)·아래(−)인지, 볼린저는 밴드가 현재가보다 몇 % 위(+)·아래(−)인지입니다.${
+      lv ? " '실시간'은 같은 식을 실시간 가격으로 계산한 값입니다." : ""}</div></div>`;
 }
-/* 밴드 차트: 볼린저 하단~상단을 띠로, 5일선·20일선은 세로 표시, 현재가는 점 */
-function bandChart(cur, m5, m20, up, lo){
+/* 밴드 차트: 볼린저 하단~상단을 띠로, 5일선~20일선 구간은 색, 현재가는 점, 실시간은 빨간 테두리 점 */
+function bandChart(cur, m5, m20, up, lo, lvp){
   const ok = v => isNum(v) && v !== 0;
-  const vals = [cur, m5, m20, up, lo].filter(ok);
+  const vals = [cur, m5, m20, up, lo, lvp].filter(ok);
   let a = Math.min(...vals), b = Math.max(...vals);
-  if (a === b){ a -= 1; b += 1; }   // 가로 길이 = 다섯 가격 중 최저~최고 (여백 없음)
+  if (a === b){ a -= 1; b += 1; }   // 가로 길이 = 가격들 중 최저~최고 (여백 없음)
   const x = v => (v - a) / (b - a) * 100;
-  window.BAND = { a, b };   // 실시간 점 위치 계산용
-  const lbl = (v, html, cls2 = "") => {
-    const p = x(v), anchor = "l";
-    return `<span class="bl ${anchor} ${cls2}" style="left:${p.toFixed(2)}%">${html}</span>`;
-  };
+  window.BAND = { a, b };
+  const lbl = (v, html, cls2 = "") => `<span class="bl l ${cls2}" style="left:${x(v).toFixed(2)}%">${html}</span>`;
   const mazone = ok(m5) && ok(m20) ? `<i class="mazone" style="left:${x(Math.min(m5, m20)).toFixed(2)}%;width:${Math.abs(x(m5) - x(m20)).toFixed(2)}%"></i>` : "";   // 5일선~20일선 구간
   const zone = ok(up) && ok(lo) ? `<i class="zone" style="left:${x(lo).toFixed(2)}%;width:${(x(up) - x(lo)).toFixed(2)}%"></i>` : "";
   const ends = [];
@@ -539,13 +583,16 @@ function bandChart(cur, m5, m20, up, lo){
   const narrow = ok(up) && ok(lo) && x(up) - x(lo) < 40;   // 띠가 좁으면 상단 글자를 한 줄 아래로
   // 이름표와 위치를 잇는 점선 (줄 높이 20px, 띠 22~46px: 띠 윗변 26 · 아랫변 42 · 현재가 점 30)
   const ld = (v, y1, y2) => ok(v) ? `<i class="ld" style="left:${x(v).toFixed(2)}%;top:${y1}px;height:${y2 - y1}px"></i>` : "";
-  const leads = ld(cur, 17, 30) + ld(m5, 42, 52) + ld(m20, 42, 72) + ld(lo, 42, 92) + ld(up, 42, narrow ? 112 : 92);
+  const endsY = narrow ? 112 : 92, liveY = narrow ? 132 : 112;
+  const leads = ld(cur, 17, 30) + ld(m5, 42, 52) + ld(m20, 42, 72) + ld(lo, 42, 92) + ld(up, 42, endsY) + (ok(lvp) ? ld(lvp, 42, liveY) : "");
   return `<div class="band" role="img" aria-label="볼린저 밴드 안에서 현재가와 이동평균선 위치">
     <div class="lane">${lbl(cur, `현재가 <b class="tn">${fInt(cur)}</b>`, "now")}</div>
-    <div class="track">${zone}${mazone}<i class="dot" style="left:${x(cur).toFixed(2)}%"></i><i class="ldot" id="ldot" hidden></i></div>
+    <div class="track">${zone}${mazone}<i class="dot" style="left:${x(cur).toFixed(2)}%"></i>${
+      ok(lvp) ? `<i class="ldot" style="left:${x(lvp).toFixed(2)}%" title="실시간 ${fInt(lvp)}"></i>` : ""}</div>
     <div class="lane">${ok(m5) ? lbl(m5, `5일선 <b class="tn">${fInt(m5)}</b>`) : ""}</div>
     <div class="lane">${ok(m20) ? lbl(m20, `20일선 <b class="tn">${fInt(m20)}</b>`) : ""}</div>
     ${narrow ? `<div class="lane">${ends[0] || ""}</div><div class="lane">${ends[1] || ""}</div>` : `<div class="lane">${ends.join("")}</div>`}
+    ${ok(lvp) ? `<div class="lane">${lbl(lvp, `<i class="lvsw"></i>실시간 <b class="tn">${fInt(lvp)}</b>`, "lv")}</div>` : ""}
     <div class="leads">${leads}</div>
   </div>`;
 }
@@ -623,12 +670,17 @@ function renderLive(){
   const box = $("live"); if (!box) return;
   const code = DATA.codes && DATA.codes[TAB] ? DATA.codes[TAB][CUR] : null;
   const it = code ? LIVE.items[code] : null;
-  const dot = $("ldot");
+  const redraw = () => {   // 값이 바뀌었을 때만 밴드 카드·차트를 다시 그림 (보고 있던 날은 유지)
+    const key = (code || "") + ":" + (it && isNum(it.price) ? [it.price, it.high, it.low].join("/") : "");
+    if (LIVE.drawn === key) return;
+    const bc = $("bandcard"); if (bc){ const h = lineCard(rowObj(TAB, CUR)); if (h){ bc.outerHTML = h; fitBandLabels(); } }
+    if ($("cbox")) drawChart(); else LIVE.drawn = key;
+  };
   if (!it || !isNum(it.price)){
     box.hidden = !(LIVE.fails >= 3);
     box.className = "live off";
     box.innerHTML = LIVE.fails >= 3 ? `<span class="ll">실시간</span><small>연결되지 않음 (${esc(LIVE.err).slice(0, 60)})</small>` : "";
-    if (dot) dot.hidden = true;
+    redraw();
     return;
   }
   const r = rowObj(TAB, CUR), open = marketOpen();
@@ -640,8 +692,7 @@ function renderLive(){
   box.innerHTML = `<span class="ll">${stale ? "연결 끊김" : open ? "실시간" : "마지막 시세"}</span><b class="lp tn">${fInt(it.price)}</b><small>원</small>`
     + `<span class="tn ${cls(it.diff)}">${arrow} ${fSignedInt(it.diff)} (${pctTxt(it.rate)})</span><em class="tn">${kstTime(LIVE.at)}</em>`
     + `<div class="lsub tn">기준가 대비 <b class="${cls(vsBase)}">${pctTxt(vsBase)}</b> · 엑셀 현재가 대비 <b class="${cls(vsXl)}">${pctTxt(vsXl)}</b> · 고 ${fInt(it.high)} 저 ${fInt(it.low)} · 거래량 ${fInt(it.vol)}</div>`;
-  if (dot && window.BAND){ const { a, b } = window.BAND, p = Math.max(0, Math.min(100, (it.price - a) / (b - a) * 100));
-    dot.hidden = false; dot.style.left = p.toFixed(2) + "%"; dot.title = `실시간 ${fInt(it.price)}`; }
+  redraw();
 }
 /* 기업 개요: 업종(WICS·KRX), 주요제품, 상장 정보, FnGuide 기업개요 */
 function descCard(k, i){
