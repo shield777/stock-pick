@@ -423,9 +423,12 @@ function heroCard(r, k, i){
   </div>`;
 }
 function holdCard(r){
-  return `<div class="card"><h2>보유</h2>
+  // 실시간 가격이 있으면 엑셀과 같은 식으로 다시 계산: 평가손익 = (현재가 − 매수가) × 보유수량, 수익률 = 현재가 ÷ 매수가 − 1
+  const lv = liveItem(), buy = r["매수가"], qty = r["보유수량"], can = lv && isNum(buy) && buy > 0 && isNum(qty);
+  const pl = can ? (lv.price - buy) * qty : r["평가손익"], rate = can ? r2(lv.price / buy * 100 - 100) : r["매수가대비"];
+  return `<div class="card" id="holdcard"><h2>보유${can ? ` <small class="lvtag">실시간</small>` : ""}</h2>
     <div class="hold tn">
-      <div class="pl"><span>평가손익</span><div><b class="${cls(r["평가손익"])}">${fSignedInt(r["평가손익"])}</b><i class="${cls(r["매수가대비"])}">${fPct(r["매수가대비"])}%</i></div></div>
+      <div class="pl"><span>평가손익</span><div><b class="${cls(pl)}">${fSignedInt(pl)}</b><i class="${cls(rate)}">${rate === 0 ? "0.00" : fPct(rate)}%</i></div></div>
       <div class="tile"><span>매수가</span><b>${fInt(r["매수가"])}</b></div>
       <div class="tile"><span>보유수량</span><b>${fInt(r["보유수량"])}</b></div>
       <div class="tile wide"><span>매수금액</span><b>${fInt(r["매수금액"])}</b></div>
@@ -706,6 +709,7 @@ function renderLive(){
   LIVE.shown = key;
   const r = rowObj(TAB, CUR);
   const hc = $("herocard"); if (hc) hc.outerHTML = heroCard(r, TAB, CUR);
+  const ho = $("holdcard"); if (ho) ho.outerHTML = holdCard(r);
   const bc = $("bandcard"); if (bc){ const h = lineCard(r); if (h){ bc.outerHTML = h; fitBandLabels(); } }
   if ($("cbox")) drawChart();
 }
